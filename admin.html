@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELBA Onboarding - NPC 관리</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a0a;color:#b0b0a8;font-family:'Noto Sans KR',sans-serif;font-weight:300;font-size:14px;line-height:1.6;padding:40px}
+  h1{color:#e8a025;font-size:24px;font-weight:700;margin-bottom:8px;letter-spacing:2px}
+  .subtitle{color:#666;font-size:12px;margin-bottom:30px}
+  .toolbar{display:flex;gap:12px;margin-bottom:24px;align-items:center}
+  .btn{background:#1a1a18;border:1px solid #3a3a35;color:#b0b0a8;font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:10px 20px;cursor:pointer;border-radius:2px;transition:all .2s}
+  .btn:hover{background:#2a2a25;border-color:#c4872a;color:#d4d4c8}
+  .btn-primary{background:#c4872a;color:#0a0a0a;border-color:#c4872a;font-weight:500}
+  .btn-primary:hover{background:#e8a025}
+  .btn-danger{border-color:#604020;color:#e05050}
+  .btn-danger:hover{background:#1a1410;border-color:#e05050}
+  .status{font-size:12px;color:#666;margin-left:auto}
+  .status.saved{color:#8bc34a}
+  table{width:100%;border-collapse:collapse;margin-bottom:20px}
+  th{background:#141412;color:#888;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1px;padding:12px 10px;text-align:left;border-bottom:1px solid #2a2a25;position:sticky;top:0}
+  td{padding:8px 10px;border-bottom:1px solid #1a1a18;vertical-align:top}
+  tr:hover td{background:#111}
+  .cell-name{color:#d4d4c8;font-weight:500;white-space:nowrap}
+  .cell-team{color:#888;font-size:12px;white-space:nowrap}
+  .cell-role{color:#666;font-size:12px;white-space:nowrap}
+  textarea{width:100%;background:#111;border:1px solid #2a2a25;color:#b0b0a8;font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:8px 10px;border-radius:2px;resize:vertical;min-height:36px;outline:none;transition:border-color .2s}
+  textarea:focus{border-color:#c4872a}
+  textarea::placeholder{color:#444}
+  .filter-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  .filter-btn{background:none;border:1px solid #2a2a25;color:#666;font-family:'Noto Sans KR',sans-serif;font-size:12px;padding:6px 14px;cursor:pointer;border-radius:2px;transition:all .2s}
+  .filter-btn:hover,.filter-btn.active{color:#e8a025;border-color:#c4872a;background:#1a1812}
+  .help-box{background:#0f1114;border:1px solid #2a3040;border-left:3px solid #5080c0;padding:16px 20px;margin-bottom:24px;font-size:13px;line-height:1.8}
+  .help-box strong{color:#5080c0}
+  @media(max-width:768px){body{padding:16px}textarea{min-height:28px;font-size:12px}th,td{padding:6px 4px;font-size:12px}}
+</style>
+</head>
+<body>
+<h1>ELBA NPC Manager</h1>
+<div class="subtitle">온보딩 RPG NPC 대사 관리 페이지</div>
+
+<div class="help-box">
+  <strong>사용법:</strong> 각 NPC의 대사를 수정한 뒤 <strong>"저장"</strong> 버튼을 누르면 localStorage에 저장됩니다.<br>
+  메인 게임(index.html)에서 NPC 조우 시 이 대사가 적용됩니다. <strong>같은 브라우저</strong>에서만 적용됩니다.<br>
+  <strong>"초기화"</strong>를 누르면 모든 대사가 기본값으로 돌아갑니다.
+</div>
+
+<div class="toolbar">
+  <button class="btn btn-primary" onclick="saveAll()">&#x1f4be; 저장</button>
+  <button class="btn btn-danger" onclick="resetAll()">&#x1f5d1;&#xfe0f; 초기화</button>
+  <button class="btn" onclick="exportJSON()">&#x1f4e4; 내보내기 (JSON)</button>
+  <button class="btn" onclick="document.getElementById('import-file').click()">&#x1f4e5; 가져오기 (JSON)</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+  <div class="status" id="save-status">변경 사항 없음</div>
+</div>
+
+<div class="filter-bar">
+  <button class="filter-btn active" data-filter="all" onclick="filterTeam('all',this)">전체</button>
+  <button class="filter-btn" data-filter="ELBA" onclick="filterTeam('ELBA',this)">대표/운영</button>
+  <button class="filter-btn" data-filter="컨텐츠1팀" onclick="filterTeam('컨텐츠1팀',this)">컨텐츠1팀</button>
+  <button class="filter-btn" data-filter="컨텐츠2팀" onclick="filterTeam('컨텐츠2팀',this)">컨텐츠2팀</button>
+  <button class="filter-btn" data-filter="개발팀" onclick="filterTeam('개발팀',this)">개발팀</button>
+  <button class="filter-btn" data-filter="경영지원실" onclick="filterTeam('경영지원실',this)">경영지원실</button>
+  <button class="filter-btn" data-filter="브랜드경험팀" onclick="filterTeam('브랜드경험팀',this)">브랜드경험팀</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:80px">이름</th>
+      <th style="width:80px">팀</th>
+      <th style="width:60px">직책</th>
+      <th>손 흔들기 응답</th>
+      <th>인사하기 응답</th>
+      <th>말 걸기 응답</th>
+    </tr>
+  </thead>
+  <tbody id="npc-table"></tbody>
+</table>
+
+<script>
+const NPC_DEFAULT=[
+  {id:'gjw',name:'구주원',team:'ELBA',role:'대표',wave:'(환하게 웃으며 손을 흔든다)',greet:'반갑습니다! ELBA에 오신 것을 환영해요.',talk:'ELBA의 시작이 궁금하다면 CEO Letter를 꼭 읽어보세요.'},
+  {id:'hbw',name:'홍병우',team:'운영',role:'이사',wave:'(다정하게 손을 흔든다)',greet:'어서 와요, 신입분이시군요!',talk:'사업 쪽 궁금한 게 있으면 언제든 물어보세요.'},
+  {id:'kdh',name:'김대훈',team:'운영',role:'이사',wave:'(미소를 지으며 고개를 끄덕인다)',greet:'환영합니다! 잘 적응하고 계신가요?',talk:'운영 관련 이슈가 생기면 편하게 연락하세요.'},
+  {id:'kjy',name:'김지영',team:'컨텐츠1팀',role:'팀장',wave:'(밝게 손을 흔든다)',greet:'안녕하세요! 1분만 채널 보셨어요?',talk:'숏폼 콘텐츠의 매력은 직접 만들어봐야 알 수 있어요.'},
+  {id:'kcy',name:'김채영',team:'컨텐츠1팀',role:'팀원',wave:'(살짝 손을 든다)',greet:'안녕하세요, 반갑습니다!',talk:'편집 작업 관련해서 궁금한 거 있으면 물어보세요.'},
+  {id:'ngk',name:'남궁기찬',team:'컨텐츠1팀',role:'팀원',wave:'(씩 웃으며 손을 흔든다)',greet:'오, 새로운 분이시군요! 반갑습니다.',talk:'모션그래픽 쪽이면 제가 좀 도와드릴 수 있어요.'},
+  {id:'gmj',name:'감민진',team:'컨텐츠1팀',role:'팀원',wave:'(밝게 미소 짓는다)',greet:'안녕하세요! 잘 부탁드려요.',talk:'채널 운영이 처음이면 걱정 마세요, 금방 적응해요.'},
+  {id:'yhr',name:'윤하린',team:'컨텐츠1팀',role:'팀원',wave:'(손을 흔든다)',greet:'반가워요! 같이 잘 해봐요.',talk:'궁금한 거 있으면 편하게 물어보세요!'},
+  {id:'lth',name:'이태환',team:'컨텐츠2팀',role:'팀장',wave:'(힘차게 손을 흔든다)',greet:'어서 오세요! 지식스토리 채널 본 적 있나요?',talk:'밀리터리 콘텐츠가 이렇게 재밌는 줄 몰랐을 거예요.'},
+  {id:'lj',name:'이준',team:'컨텐츠2팀',role:'팀원',wave:'(고개를 끄덕인다)',greet:'안녕하세요, 반갑습니다!',talk:'대본 작업이 궁금하시면 알려드릴게요.'},
+  {id:'gyh',name:'구예희',team:'컨텐츠2팀',role:'팀원',wave:'(미소를 지으며 손을 흔든다)',greet:'환영해요! 잘 적응하길 바라요.',talk:'기획 쪽 작업 프로세스가 궁금하면 물어보세요.'},
+  {id:'cis',name:'최인실',team:'컨텐츠2팀',role:'팀원',wave:'(밝게 인사한다)',greet:'안녕하세요! 같이 일하게 되어 반가워요.',talk:'촬영 장비 사용법은 OJT에서 배우게 될 거예요.'},
+  {id:'pjy',name:'박준영',team:'컨텐츠2팀',role:'팀원',wave:'(손을 든다)',greet:'반갑습니다!',talk:'영상 편집 관련 질문 환영합니다.'},
+  {id:'lhy',name:'이하영',team:'컨텐츠2팀',role:'팀원',wave:'(미소 짓는다)',greet:'안녕하세요! 잘 부탁드려요.',talk:'콘텐츠 제작 파이프라인은 금방 익숙해질 거예요.'},
+  {id:'pjs',name:'박준식',team:'컨텐츠2팀',role:'팀원',wave:'(반갑게 인사한다)',greet:'어서 오세요!',talk:'NAS 폴더 구조는 처음엔 좀 복잡한데, 금방 익혀요.'},
+  {id:'nsh',name:'노수현',team:'컨텐츠2팀',role:'팀원',wave:'(활기차게 손을 흔든다)',greet:'반가워요! 화이팅!',talk:'다큐 콘텐츠 작업은 정말 보람 있어요.'},
+  {id:'lmk',name:'이민기',team:'개발팀',role:'팀장',wave:'(차분하게 손을 흔든다)',greet:'환영합니다! YouViCo 써보셨어요?',talk:'피드백을 넘어 AI가 직접 수정까지 해주는 게 YouViCo의 방향입니다.'},
+  {id:'jsb',name:'조성빈',team:'개발팀',role:'팀장대리',wave:'(고개를 끄덕이며 인사한다)',greet:'안녕하세요! 개발팀입니다.',talk:'코드 리뷰는 꼼꼼하게 하는 편이에요. 같이 성장하죠.'},
+  {id:'hmh',name:'홍명헌',team:'개발팀',role:'팀원',wave:'(손을 든다)',greet:'반갑습니다!',talk:'개발 환경 세팅에서 막히면 말씀하세요.'},
+  {id:'lsh',name:'임성훈',team:'경영지원실',role:'팀장',wave:'(따뜻하게 손을 흔든다)',greet:'어서 오세요! 온보딩 담당자입니다.',talk:'Zapier 자동화가 궁금하면 물어보세요. 90%까지 자동화하는 게 목표예요.'},
+  {id:'kmj',name:'김미진',team:'경영지원실',role:'팀원',wave:'(친절하게 미소 짓는다)',greet:'안녕하세요! 궁금한 거 있으면 편하게 물어보세요.',talk:'FLEX 출퇴근 관련 문제 생기면 저한테 연락하세요.'},
+  {id:'kth',name:'김태호',team:'경영지원실',role:'팀원',wave:'(손을 흔든다)',greet:'반갑습니다! 잘 적응하시길 바랍니다.',talk:'경영지원 쪽 업무가 궁금하면 알려드릴게요.'},
+  {id:'kkb',name:'김규빈',team:'경영지원실',role:'팀원',wave:'(밝게 인사한다)',greet:'환영합니다!',talk:'지원사업 관련 작업이 꽤 많은데, 같이 해봐요.'},
+  {id:'bgy',name:'변가윤',team:'브랜드경험팀',role:'팀원',wave:'(손을 흔든다)',greet:'안녕하세요! 디자인 쪽에서 일하고 있어요.',talk:'Figma 프로젝트 구조부터 익히면 빠를 거예요.'}
+];
+
+let currentFilter='all';
+
+function render(){
+  const saved=localStorage.getItem('elba-npc-data');
+  let custom={};
+  try{if(saved)custom=JSON.parse(saved)}catch(e){}
+  const tbody=document.getElementById('npc-table');
+  tbody.innerHTML='';
+  NPC_DEFAULT.forEach(npc=>{
+    const c=custom[npc.id]||{};
+    const show=currentFilter==='all'||npc.team===currentFilter||(currentFilter==='ELBA'&&(npc.team==='ELBA'||npc.team==='운영'));
+    const tr=document.createElement('tr');
+    tr.dataset.team=npc.team;
+    tr.style.display=show?'':'none';
+    tr.innerHTML=`<td class="cell-name">${npc.name}</td>
+<td class="cell-team">${npc.team}</td>
+<td class="cell-role">${npc.role}</td>
+<td><textarea data-id="${npc.id}" data-field="wave" placeholder="${npc.wave}">${c.wave||''}</textarea></td>
+<td><textarea data-id="${npc.id}" data-field="greet" placeholder="${npc.greet}">${c.greet||''}</textarea></td>
+<td><textarea data-id="${npc.id}" data-field="talk" placeholder="${npc.talk}">${c.talk||''}</textarea></td>`;
+    tbody.appendChild(tr);
+  });
+  document.querySelectorAll('textarea').forEach(ta=>{
+    ta.addEventListener('input',()=>{document.getElementById('save-status').textContent='변경 사항 있음';document.getElementById('save-status').className='status'});
+  });
+}
+
+function saveAll(){
+  const data={};
+  document.querySelectorAll('textarea').forEach(ta=>{
+    const id=ta.dataset.id,field=ta.dataset.field,val=ta.value.trim();
+    if(val){if(!data[id])data[id]={};data[id][field]=val}
+  });
+  localStorage.setItem('elba-npc-data',JSON.stringify(data));
+  const st=document.getElementById('save-status');
+  st.textContent='저장 완료!';st.className='status saved';
+  setTimeout(()=>{st.textContent='변경 사항 없음';st.className='status'},2000);
+}
+
+function resetAll(){
+  if(!confirm('모든 커스텀 대사를 초기화하시겠습니까?'))return;
+  localStorage.removeItem('elba-npc-data');
+  render();
+  const st=document.getElementById('save-status');
+  st.textContent='초기화 완료';st.className='status saved';
+}
+
+function filterTeam(team,btn){
+  currentFilter=team;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#npc-table tr').forEach(tr=>{
+    const t=tr.dataset.team;
+    tr.style.display=(team==='all'||t===team||(team==='ELBA'&&(t==='ELBA'||t==='운영')))?'':'none';
+  });
+}
+
+function exportJSON(){
+  const saved=localStorage.getItem('elba-npc-data')||'{}';
+  const blob=new Blob([saved],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='elba-npc-data.json';
+  a.click();
+}
+
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      localStorage.setItem('elba-npc-data',JSON.stringify(data));
+      render();
+      const st=document.getElementById('save-status');
+      st.textContent='가져오기 완료!';st.className='status saved';
+    }catch(err){alert('잘못된 JSON 파일입니다.')}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+document.addEventListener('DOMContentLoaded',render);
+</script>
+</body>
+</html>
