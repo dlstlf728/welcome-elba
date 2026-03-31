@@ -3,467 +3,794 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ELBA : 탐험의 시작</title>
+<title>ELBA DUNGEON</title>
+<script src="game-data.js"></script>
+<script src="npc-data.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box}
-  :root{--bg:#0a0a0a;--text:#b0b0a8;--text-bright:#d4d4c8;--accent:#e8a025;--accent-dim:#c4872a;--btn-bg:#1a1a18;--btn-border:#3a3a35;--btn-hover:#2a2a25;--divider:#2a2a25}
-  body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-weight:300;font-size:15px;line-height:1.8;min-height:100vh;overflow-x:hidden}
-  #game-wrapper{display:flex;min-height:100vh}
-  #panel-left{flex:0 0 260px;border-right:1px solid var(--divider);padding:40px 24px;display:flex;flex-direction:column;position:fixed;top:0;left:0;width:260px;height:100vh;overflow-y:auto}
-  #panel-main{flex:1;margin-left:260px;padding:60px 80px;max-width:760px}
-  #panel-right{position:fixed;top:0;right:0;width:240px;height:100vh;border-left:1px solid var(--divider);padding:40px 20px;overflow-y:auto}
-  #logo{font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;color:var(--accent);letter-spacing:4px;margin-bottom:4px}
-  #logo-sub{font-size:11px;color:#666;letter-spacing:2px;margin-bottom:40px;text-transform:uppercase}
-  .nav-btn{display:block;width:100%;text-align:left;background:0 0;border:none;color:#555;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:400;padding:10px 12px;cursor:pointer;border-radius:4px;transition:all .3s;margin-bottom:2px;letter-spacing:1px}
-  .nav-btn:hover{color:var(--text);background:#151515}.nav-btn.active{color:var(--accent);background:#1a1812}.nav-btn.locked{cursor:default;opacity:.3}.nav-btn.locked:hover{color:#555;background:0 0}.nav-btn .lock-icon{font-size:10px;margin-left:4px}
-  #progress-section{margin-top:auto;padding-top:20px;border-top:1px solid var(--divider)}#progress-label{font-size:11px;color:#555;margin-bottom:8px;letter-spacing:1px}#progress-bar-bg{width:100%;height:3px;background:#1a1a18;border-radius:2px;overflow:hidden}#progress-bar{width:0;height:100%;background:var(--accent);transition:width .8s ease}#progress-pct{font-size:11px;color:var(--accent-dim);margin-top:6px;text-align:right}
-  .stat-title{font-size:11px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}.stat-item{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid #1a1a18}.stat-key{color:#666}.stat-val{color:var(--text-bright);font-weight:400}.stat-val.highlight{color:var(--accent)}#inventory{margin-top:30px}.inv-item{font-size:12px;color:var(--text);padding:4px 0;opacity:0;transition:opacity .5s}.inv-item.show{opacity:1}
-  .scene{display:none}.scene.active{display:block}
-  .scene-title{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:700;color:var(--text-bright);margin-bottom:30px;opacity:0;transform:translateY(8px);animation:fadeUp .8s ease forwards}
-  .narrative{opacity:0;margin-bottom:16px;transform:translateY(5px)}.narrative.visible{animation:fadeUp .6s ease forwards}.narrative em{color:var(--accent);font-style:normal}.narrative strong{color:var(--text-bright);font-weight:500}
-  .divider{border:none;border-top:1px solid var(--divider);margin:30px 0}
-  .choices{margin-top:30px;opacity:0;animation:fadeUp .6s ease .3s forwards}
-  .choice-btn{display:block;width:100%;text-align:left;background:var(--btn-bg);border:1px solid var(--btn-border);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:400;padding:14px 20px;margin-bottom:8px;cursor:pointer;border-radius:2px;transition:all .2s;position:relative}
-  .choice-btn:hover{background:var(--btn-hover);border-color:var(--accent-dim);color:var(--text-bright);padding-left:28px}.choice-btn:hover::before{content:'>';position:absolute;left:14px;color:var(--accent)}.choice-btn:active{background:#222218}.choice-btn.done{opacity:.4;pointer-events:none;border-color:#2a2a25}.choice-btn.done::after{content:' \u2713';color:var(--accent)}
-  #notification{position:fixed;top:-60px;left:50%;transform:translateX(-50%);background:#1a1a18;border:1px solid var(--accent-dim);color:var(--accent);padding:12px 30px;font-size:13px;border-radius:2px;z-index:100;transition:top .4s ease;white-space:nowrap}#notification.show{top:20px}
-  .text-input-wrap{margin-top:20px;display:flex;gap:8px;opacity:0;animation:fadeUp .6s ease .5s forwards}
-  .text-input{flex:1;background:#111;border:1px solid var(--btn-border);color:var(--text-bright);font-family:'Noto Sans KR',sans-serif;font-size:14px;padding:12px 16px;border-radius:2px;outline:0;transition:border-color .2s}.text-input:focus{border-color:var(--accent-dim)}.text-input::placeholder{color:#444}
-  .submit-btn{background:var(--accent-dim);border:none;color:#0a0a0a;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;padding:12px 24px;cursor:pointer;border-radius:2px;transition:background .2s}.submit-btn:hover{background:var(--accent)}
-  .reward-box{background:#14140f;border:1px solid var(--accent-dim);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:13px}.reward-box .reward-title{color:var(--accent);font-weight:500;margin-bottom:6px;font-size:12px;letter-spacing:1px;text-transform:uppercase}
-  .info-box{background:#0f1114;border:1px solid #2a3040;border-left:3px solid #5080c0;padding:16px 20px;margin:16px 0;font-size:13px;line-height:2}.info-box .info-title{color:#5080c0;font-weight:500;margin-bottom:6px;font-size:12px;letter-spacing:1px}
-  .warn-box{background:#1a1410;border:1px solid #604020;border-left:3px solid #e05050;padding:16px 20px;margin:16px 0;font-size:13px;line-height:2}.warn-box .warn-title{color:#e05050;font-weight:500;margin-bottom:6px;font-size:12px;letter-spacing:1px}
-
-  /* NPC Encounter Modal */
-  #npc-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:200;justify-content:center;align-items:center;flex-direction:column}
-  #npc-overlay.show{display:flex}
-  #npc-encounter{max-width:500px;width:90%;text-align:center}
-  .npc-announce{font-size:13px;color:#666;letter-spacing:2px;margin-bottom:8px;opacity:0;animation:fadeUp .5s ease .3s forwards}
-  .npc-title{font-family:'Noto Serif KR',serif;font-size:20px;color:var(--text-bright);margin-bottom:30px;opacity:0;animation:fadeUp .6s ease .6s forwards}
-  .npc-title strong{color:var(--accent)}
-  .npc-card{background:#141412;border:1px solid var(--btn-border);border-radius:4px;padding:24px;margin-bottom:30px;text-align:left;opacity:0;animation:fadeUp .5s ease .9s forwards}
-  .npc-name{font-family:'Noto Serif KR',serif;font-size:18px;color:var(--text-bright);font-weight:700;margin-bottom:4px}
-  .npc-info{font-size:12px;color:#666;margin-bottom:12px;letter-spacing:1px}
-  .npc-dialog{font-size:14px;color:var(--text);font-style:italic;min-height:20px}
-  .npc-actions{opacity:0;animation:fadeUp .5s ease 1.2s forwards}
-  .npc-actions .choice-btn{text-align:center;border-color:#3a3a35}
-
-  /* Continue overlay */
-  #continue-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:300;justify-content:center;align-items:center;flex-direction:column}
-  #continue-overlay.show{display:flex}
-  .continue-box{text-align:center;max-width:400px}
-  .continue-box h2{font-family:'Noto Serif KR',serif;color:var(--accent);font-size:28px;letter-spacing:4px;margin-bottom:8px}
-  .continue-box p{color:#666;font-size:13px;margin-bottom:30px}
-  .continue-box .choice-btn{text-align:center}
-
-  @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-  @keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
-  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#2a2a25;border-radius:2px}
-  @media(max-width:1100px){#panel-right{display:none}}
-  @media(max-width:768px){#panel-left{position:relative;width:100%;flex:none;height:auto;border-right:none;border-bottom:1px solid var(--divider);padding:20px}#panel-main{margin-left:0;padding:30px 20px}#game-wrapper{flex-direction:column}#progress-section{margin-top:20px}}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Gabarito:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1510;--parch:#f4ecd8;--ink:#2a1a0a;--ink2:#5a4a30;--accent:#8b3a0f;--accent2:#c4651a;--gold:#b8952a;--btn-bg:#e8dcc4;--btn-border:#c4b898;--btn-hover:#d8ccb0;--hp-green:#4a7a3a;--hp-red:#8b3a2a;--blue:#3a5a8b}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Serif KR',serif;font-weight:400;font-size:15px;line-height:1.9;min-height:100vh}
+/* Parchment wrapper */
+#wrap{max-width:720px;margin:0 auto;padding:50px 48px;min-height:100vh;background:var(--parch);background-image:url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");box-shadow:inset 0 0 80px rgba(0,0,0,.12),4px 0 20px rgba(0,0,0,.4),-4px 0 20px rgba(0,0,0,.4);border-left:3px solid #c4b080;border-right:3px solid #c4b080;position:relative}
+#wrap::before,#wrap::after{content:'';position:absolute;left:12px;right:12px;height:2px;background:linear-gradient(90deg,transparent,#c4b080 20%,#c4b080 80%,transparent)}
+#wrap::before{top:16px}#wrap::after{bottom:16px}
+/* Decorative corner marks */
+.corner{position:absolute;width:20px;height:20px;border-color:#b09060;border-style:solid;border-width:0;opacity:.5}
+.corner.tl{top:20px;left:16px;border-top-width:2px;border-left-width:2px}
+.corner.tr{top:20px;right:16px;border-top-width:2px;border-right-width:2px}
+.corner.bl{bottom:20px;left:16px;border-bottom-width:2px;border-left-width:2px}
+.corner.br{bottom:20px;right:16px;border-bottom-width:2px;border-right-width:2px}
+h1{font-family:'Noto Serif KR',serif;color:var(--accent);font-size:30px;font-weight:900;letter-spacing:6px;text-align:center;margin-bottom:4px;text-shadow:1px 1px 0 rgba(0,0,0,.1)}
+.sub{text-align:center;color:var(--ink2);font-size:12px;letter-spacing:4px;margin-bottom:40px;font-style:italic}
+/* Narrative */
+.nar{margin-bottom:14px;opacity:0;transform:translateY(5px);animation:fadeUp .6s ease forwards;font-size:15px}
+.nar em{color:var(--accent);font-style:italic;font-weight:700}
+.nar strong{color:var(--ink);font-weight:700}
+.sep{border:none;border-top:1px solid #c4b898;margin:24px 0}
+/* Buttons — manuscript style */
+.btn{display:block;width:100%;text-align:left;background:var(--btn-bg);border:1px solid var(--btn-border);color:var(--ink);font-family:'Noto Serif KR',serif;font-size:14px;padding:12px 20px;margin-bottom:8px;cursor:pointer;border-radius:0;transition:all .2s;position:relative}
+.btn:hover{background:var(--btn-hover);border-color:var(--accent2);color:var(--accent);padding-left:28px}
+.btn:hover::before{content:'▸';position:absolute;left:12px;color:var(--accent)}
+.btn:disabled{opacity:.3;cursor:default;padding-left:20px}
+.btn:disabled:hover::before{content:none}
+.btn-accent{border-color:var(--accent2);color:var(--accent);font-weight:700}
+/* Input */
+.input-row{display:flex;gap:8px;margin-top:20px}
+.inp{flex:1;background:#f0e6d0;border:1px solid var(--btn-border);color:var(--ink);font-family:'Noto Serif KR',serif;font-size:14px;padding:12px 16px;border-radius:0;outline:0}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:#a09070}
+.sbtn{background:var(--accent);border:none;color:var(--parch);font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;padding:12px 24px;cursor:pointer;border-radius:0}
+.sbtn:hover{background:var(--accent2)}
+/* Panels — parchment cards */
+.box{background:#efe5cf;border:1px solid #c4b898;border-radius:0;padding:16px 20px;margin:16px 0;font-size:13px;line-height:2;position:relative}
+.box-accent{border-left:3px solid var(--accent)}
+.box-info{border-left:3px solid var(--blue)}
+.box-warn{border-left:3px solid var(--hp-red)}
+.box-title{font-weight:700;margin-bottom:6px;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.box-title.t-accent{color:var(--accent)}.box-title.t-info{color:var(--blue)}.box-title.t-warn{color:var(--hp-red)}
+/* Stats bar */
+#stats{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0;padding:12px 16px;background:#efe5cf;border:1px solid #c4b898;font-size:12px}
+.st{display:flex;align-items:center;gap:4px}
+.st-label{color:var(--ink2)}
+.st-val{color:var(--ink);font-weight:700}
+.st-hp{color:var(--hp-green)}.st-atk{color:var(--accent)}.st-def{color:var(--blue)}.st-lv{color:var(--gold)}
+/* HP Bar */
+.hp-bar{width:120px;height:6px;background:#d8ccb0;border-radius:0;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:4px;border:1px solid #c4b898}
+.hp-fill{height:100%;background:var(--hp-green);transition:width .4s}
+.hp-fill.low{background:var(--hp-red)}
+/* Tile Map — old map style */
+#map-container{margin:16px auto;text-align:center;position:relative}
+#torch-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;background:radial-gradient(circle 90px at var(--torch-x,50%) var(--torch-y,50%),transparent 0%,rgba(26,21,16,.6) 60%,rgba(26,21,16,.88) 100%);transition:background .05s}
+#tilemap{display:inline-grid;gap:0;font-family:'Courier New',monospace;user-select:none;outline:none;border:2px solid #a09060;background:#2a2018}
+#tilemap:focus{border-color:var(--accent)}
+.t{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.t-w{background:#1a1510;color:#2a2520}.t-f{background:#2a2418;color:#3a3428}
+.t-p{background:var(--gold)!important;color:#1a1510!important;border-radius:2px;font-size:14px}
+.t-e{border-radius:2px;cursor:default;font-size:11px;border:1px solid rgba(255,60,60,.4)}
+.t-e.dead{opacity:.15;border-color:transparent}
+.t-s{background:#2a1a10;color:var(--gold);font-size:13px;animation:pulse 1.5s infinite}
+.t-i{background:#1a2028;color:#6ac;font-size:14px;animation:pulse 2s infinite;border:1px solid rgba(100,170,200,.3)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.t-npc{border-radius:2px;font-size:11px}
+#map-hint{text-align:center;font-size:11px;color:var(--ink2);margin-top:8px}
+#map-hint kbd{background:#efe5cf;border:1px solid #c4b898;padding:1px 5px;font-size:10px;color:var(--ink2)}
+#map-zone{text-align:center;color:var(--ink2);font-size:12px;margin-top:4px;font-style:italic}
+/* Battle overlay — dark parchment */
+#battle{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(20,16,10,.94);z-index:200;justify-content:center;align-items:center}
+#battle.show{display:flex}
+#battle-box{max-width:500px;width:90%;padding:30px;background:#2a2018;border:2px solid #5a4a30;box-shadow:0 0 40px rgba(0,0,0,.5)}
+.b-announce{font-size:13px;color:#8a7a5a;letter-spacing:2px;text-align:center;margin-bottom:8px;opacity:0;animation:fadeUp .5s .2s forwards}
+.b-title{font-family:'Noto Serif KR',serif;font-size:20px;color:var(--parch);text-align:center;margin-bottom:24px;opacity:0;animation:fadeUp .6s .5s forwards}
+.b-title strong{color:var(--accent2)}
+.b-card{background:#1a1510;border:1px solid #5a4a30;padding:20px;margin-bottom:20px;opacity:0;animation:fadeUp .5s .8s forwards}
+.b-name{font-family:'Noto Serif KR',serif;font-size:17px;color:var(--parch);font-weight:700}
+.b-sub{font-size:11px;color:#8a7a5a;letter-spacing:1px;margin-bottom:10px}
+.b-hp-row{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;color:#c4b898}
+.b-dialog{font-size:13px;color:#c4b898;font-style:italic;margin-top:8px}
+#b-log{max-height:120px;overflow-y:auto;font-size:12px;color:#8a7a5a;margin-bottom:16px;padding:8px;background:#14100a;border:1px solid #3a3020}
+#b-log p{margin-bottom:4px}
+#b-log .dmg{color:#c45a3a}
+#b-log .heal{color:#5a9a4a}
+#b-log .info{color:var(--gold)}
+#b-log .crit{color:#e8a025;font-weight:700}
+#b-log .miss{color:#6a6a5a;font-style:italic}
+#b-actions{opacity:0;animation:fadeUp .5s 1.1s forwards}
+#b-actions .btn{text-align:center;background:#2a2418;border-color:#5a4a30;color:#c4b898}
+#b-actions .btn:hover{background:#3a3020;border-color:var(--accent2);color:var(--parch)}
+#b-actions .btn:hover::before{color:var(--accent2)}
+/* Inventory */
+#inv-panel{background:#efe5cf;border:1px solid #c4b898;padding:12px 16px;margin-top:16px;font-size:12px}
+.inv-title{color:var(--ink2);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.inv-item{padding:3px 0;color:var(--ink);display:flex;justify-content:space-between}
+.inv-item .iname{color:var(--ink);font-weight:700}
+.inv-item .icount{color:var(--ink2)}
+/* Notification */
+#notif{position:fixed;top:-60px;left:50%;transform:translateX(-50%);background:#2a2018;border:1px solid var(--gold);color:var(--gold);padding:10px 28px;font-size:13px;z-index:300;transition:top .4s;white-space:nowrap;font-family:'Noto Serif KR',serif}
+#notif.show{top:20px}
+/* Game Over */
+#gameover{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,5,0,.95);z-index:250;justify-content:center;align-items:center;flex-direction:column;text-align:center}
+#gameover.show{display:flex}
+#gameover h2{font-family:'Noto Serif KR',serif;color:var(--hp-red);font-size:28px;margin-bottom:16px}
+#gameover p{color:#8a7a5a;margin-bottom:24px;font-size:14px}
+#gameover .btn{max-width:300px;margin:4px auto;text-align:center;background:#2a2018;border-color:#5a4a30;color:#c4b898}
+#gameover .btn:hover{background:#3a3020;color:var(--parch)}
+/* Screens */
+.screen{display:none}.screen.active{display:block}
+/* Animations */
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.shake{animation:shake .3s}
+@keyframes throneReveal{0%{background:radial-gradient(circle 0px at 50% 50%,transparent,#1a1510)}30%{background:radial-gradient(circle 60px at 50% 50%,transparent 0%,rgba(26,21,16,.7) 80%,#1a1510 100%)}100%{background:none}}
+@keyframes screenFlash{0%{opacity:0}10%{opacity:.5}100%{opacity:0}}
+@keyframes bossShake{0%,100%{transform:translate(0)}10%{transform:translate(-3px,-2px)}20%{transform:translate(4px,1px)}30%{transform:translate(-2px,3px)}40%{transform:translate(3px,-1px)}50%{transform:translate(-1px,2px)}60%{transform:translate(2px,-3px)}70%{transform:translate(-4px,1px)}80%{transform:translate(1px,2px)}90%{transform:translate(-2px,-1px)}}
+#throne-reveal{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:11;background:#1a1510;animation:throneReveal 2.5s ease forwards}
+#screen-flash{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--gold);pointer-events:none;z-index:400;opacity:0;animation:screenFlash .8s ease forwards}
+.boss-shake{animation:bossShake .6s ease 3}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--parch)}::-webkit-scrollbar-thumb{background:#c4b898}
 </style>
 </head>
 <body>
-<div id="notification"></div>
+<div id="notif"></div>
+<div id="battle"><div id="battle-box"></div></div>
+<div id="gameover"><h2>You Died</h2><p id="go-msg">어둠이 당신을 집어삼켰다...</p><button class="btn" onclick="retryFloor()">현재 층 처음부터</button><button class="btn" onclick="restart()">처음부터 다시 시작</button></div>
+<div id="wrap">
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <!-- TITLE SCREEN -->
+  <div class="screen active" id="scr-title">
+    <div style="text-align:center;padding-top:80px">
+      <h1 id="game-title"></h1>
+      <div class="sub" id="game-sub"></div>
+    </div>
+    <div id="title-intro" style="margin:40px 0"></div>
+    <div class="input-row" id="name-input-row">
+      <input type="text" class="inp" id="name-inp" placeholder="탐험가의 이름을 입력하세요..." maxlength="20">
+      <button class="sbtn" onclick="startGame()">탐험 시작</button>
+    </div>
+    <div id="title-continue" style="margin-top:16px;display:none">
+      <button class="btn btn-accent" onclick="loadGame()">이어서 탐험하기</button>
+      <button class="btn" onclick="showNewGame()">처음부터 시작하기</button>
+    </div>
+  </div>
 
-<!-- Continue Overlay -->
-<div id="continue-overlay">
-  <div class="continue-box">
-    <h2>ELBA</h2>
-    <p>저장된 탐험 기록이 발견되었습니다.</p>
-    <button class="choice-btn" onclick="loadGame()">이어서 탐험하기</button>
-    <button class="choice-btn" onclick="newGame()">처음부터 시작하기</button>
+  <!-- DUNGEON SCREEN -->
+  <div class="screen" id="scr-dungeon">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h2 style="font-family:'Noto Serif KR',serif;color:var(--bright);font-size:18px" id="floor-name"></h2>
+      <span style="font-size:12px;color:#555" id="floor-num"></span>
+    </div>
+    <p class="nar" id="floor-intro" style="margin-top:12px"></p>
+    <div id="stats"></div>
+    <div id="map-container"><div id="tilemap" tabindex="0"></div><div id="torch-overlay"></div></div>
+    <div id="map-hint"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 이동 · <kbd>Space</kbd> 상호작용</div>
+    <div id="map-zone"></div>
+    <div id="inv-panel"></div>
+  </div>
+
+  <!-- FLOOR CLEAR SCREEN -->
+  <div class="screen" id="scr-clear">
+    <div id="clear-content"></div>
+  </div>
+
+  <!-- ENDING SCREEN -->
+  <div class="screen" id="scr-ending">
+    <div id="ending-content"></div>
   </div>
 </div>
 
-<!-- NPC Encounter -->
-<div id="npc-overlay">
-  <div id="npc-encounter">
-    <div class="npc-announce" id="npc-announce"></div>
-    <div class="npc-title" id="npc-title"></div>
-    <div class="npc-card">
-      <div class="npc-name" id="npc-name"></div>
-      <div class="npc-info" id="npc-info"></div>
-      <div class="npc-dialog" id="npc-dialog">"..."</div>
-    </div>
-    <div class="npc-actions" id="npc-actions"></div>
-  </div>
-</div>
-
-<div id="game-wrapper">
-  <div id="panel-left">
-    <div id="logo">ELBA</div>
-    <div id="logo-sub">Onboarding Quest</div>
-    <button class="nav-btn active" data-scene="prologue" onclick="goScene('prologue')">Prologue</button>
-    <button class="nav-btn locked" data-scene="company" id="nav-company">ELBA is ABLE <span class="lock-icon">&#x1f512;</span></button>
-    <button class="nav-btn locked" data-scene="channels" id="nav-channels">채널 탐험 <span class="lock-icon">&#x1f512;</span></button>
-    <button class="nav-btn locked" data-scene="team" id="nav-team">팀 합류 <span class="lock-icon">&#x1f512;</span></button>
-    <button class="nav-btn locked" data-scene="tools" id="nav-tools">장비 수령 <span class="lock-icon">&#x1f512;</span></button>
-    <button class="nav-btn locked" data-scene="culture" id="nav-culture">ELBA 다움 <span class="lock-icon">&#x1f512;</span></button>
-    <button class="nav-btn locked" data-scene="mission" id="nav-mission">D-Day 미션 <span class="lock-icon">&#x1f512;</span></button>
-    <button class="nav-btn locked" data-scene="ending" id="nav-ending">여정의 시작 <span class="lock-icon">&#x1f512;</span></button>
-    <div id="progress-section">
-      <div id="progress-label">탐험 진행도</div>
-      <div id="progress-bar-bg"><div id="progress-bar"></div></div>
-      <div id="progress-pct">0%</div>
-    </div>
-  </div>
-  <div id="panel-main">
-    <!-- PROLOGUE -->
-    <div class="scene active" id="scene-prologue">
-      <h2 class="scene-title">...</h2>
-      <p class="narrative" data-delay="800">어둠 속에서 눈을 뜬다.</p>
-      <p class="narrative" data-delay="2000">낯선 책상. 낯선 의자. 모니터에 커서 하나가 깜빡이고 있다.</p>
-      <p class="narrative" data-delay="3500">책상 위에 놓인 한 장의 카드를 발견한다.</p>
-      <p class="narrative" data-delay="5000"><em>"환영합니다, 탐험가님. 당신은 ELBA에 도착했습니다."</em></p>
-      <p class="narrative" data-delay="6500">카드를 뒤집자 글씨가 더 보인다.</p>
-      <p class="narrative" data-delay="7500"><em>"ELBA is ABLE &mdash; 미디어 테크의 선도 기업. 이곳에서의 첫 번째 하루가 시작됩니다."</em></p>
-      <div class="text-input-wrap" style="animation-delay:9s"><input type="text" class="text-input" id="player-name-input" placeholder="당신의 이름을 입력하세요..." maxlength="20"><button class="submit-btn" onclick="setPlayerName()">입력</button></div>
-    </div>
-    <!-- COMPANY -->
-    <div class="scene" id="scene-company">
-      <h2 class="scene-title">ELBA is ABLE</h2>
-      <p class="narrative" data-delay="300">모니터에 불이 들어온다. 화면에 <strong>ELBA</strong>의 로고가 선명하게 떠오른다.</p>
-      <p class="narrative" data-delay="1500">화면 한쪽에서 가이드 봇 <strong>'E'</strong>가 나타난다.</p>
-      <p class="narrative" data-delay="2800"><em>"반갑습니다, <span class="pn"></span>님. 저는 가이드 봇 E입니다."</em></p>
-      <p class="narrative" data-delay="4000"><em>"ELBA는 구주원 대표가 이끄는 '미디어 테크의 선도 기업'입니다."</em></p>
-      <p class="narrative" data-delay="5500"><em>"유튜브 채널을 직접 운영하면서 누적 구독자 300만 이상의 채널 네트워크를 구축했고, 자체 개발한 B2B SaaS 플랫폼 YouViCo까지 보유하고 있죠."</em></p>
-      <p class="narrative" data-delay="7200"><em>"올해 목표는 '질적으로 성장한 ELBA가 되자'입니다. 더 알고 싶으신가요?"</em></p>
-      <div class="choices" style="animation-delay:8.5s">
-        <button class="choice-btn" onclick="companyChoice('vision')">ELBA의 비전과 목표에 대해 묻는다</button>
-        <button class="choice-btn" onclick="companyChoice('structure')">회사 구조가 궁금하다</button>
-        <button class="choice-btn" onclick="companyChoice('skip')">고개를 끄덕이고 다음으로 넘어간다</button>
-      </div>
-      <div id="company-detail" style="display:none"></div>
-    </div>
-    <!-- CHANNELS -->
-    <div class="scene" id="scene-channels">
-      <h2 class="scene-title">채널 탐험</h2>
-      <p class="narrative" data-delay="300">E가 여러 개의 모니터가 켜진 방으로 안내한다.</p>
-      <p class="narrative" data-delay="1200"><em>"유튜브는 단순한 플랫폼이 아니라, ELBA의 실험실입니다."</em></p>
-      <p class="narrative" data-delay="2400"><em>"직접 운영 채널과 공동 운영 채널, 두 축으로 나뉘어요. 한 번 살펴볼까요?"</em></p>
-      <div class="choices" style="animation-delay:3.5s">
-        <button class="choice-btn ch-btn" data-ch="ilbunman" onclick="exploreChannel('ilbunman')">&#x1f3ac; 1분만 &mdash; 113만 구독, ELBA 대표 채널</button>
-        <button class="choice-btn ch-btn" data-ch="jisik" onclick="exploreChannel('jisik')">&#x1f30d; 지식스토리 &mdash; 67만 구독, 밀리터리/다큐</button>
-        <button class="choice-btn ch-btn" data-ch="helchang" onclick="exploreChannel('helchang')">&#x1f4aa; 헬창TV &mdash; 47만 구독, 피트니스 예능</button>
-        <button class="choice-btn ch-btn" data-ch="funlaw" onclick="exploreChannel('funlaw')">&#x2696;&#xfe0f; 펀무법인 &mdash; 법률 예능 (법무법인 호암 협업)</button>
-        <button class="choice-btn ch-btn" data-ch="others" onclick="exploreChannel('others')">&#x1f4fa; 기타 채널 &mdash; 이랜드, 1곡만, Idiot Factory 등</button>
-      </div>
-      <div id="channel-detail" style="display:none"></div>
-    </div>
-    <!-- TEAM -->
-    <div class="scene" id="scene-team">
-      <h2 class="scene-title">팀 합류</h2>
-      <p class="narrative" data-delay="300">복도를 걸으며 열려 있는 사무실들을 지나친다.</p>
-      <p class="narrative" data-delay="1300">모니터가 빼곡히 늘어선 편집실, 화이트보드가 가득한 기획실, 카메라 장비가 쌓인 스튜디오...</p>
-      <p class="narrative" data-delay="2600"><em>"<span class="pn"></span>님은 어느 팀에 합류하게 되셨나요?"</em></p>
-      <div class="choices" style="animation-delay:3.5s">
-        <button class="choice-btn" onclick="chooseTeam('c1')">&#x1f3ac; 컨텐츠1팀 &mdash; 1분만, 1곡만 (팀장 김지영)</button>
-        <button class="choice-btn" onclick="chooseTeam('c2')">&#x1f30d; 컨텐츠2팀 &mdash; 지식스토리, 펀무법인, 헬창TV (팀장 이태환)</button>
-        <button class="choice-btn" onclick="chooseTeam('dev')">&#x1f4bb; 개발팀 &mdash; YouViCo 개발 (팀장 이민기)</button>
-        <button class="choice-btn" onclick="chooseTeam('biz')">&#x1f3e2; 경영지원실 &mdash; 경영, B2G, 자동화 (팀장 임성훈)</button>
-        <button class="choice-btn" onclick="chooseTeam('brand')">&#x2728; 브랜드경험팀 &mdash; 디자인, 브랜딩</button>
-      </div>
-      <div id="team-detail" style="display:none"></div>
-    </div>
-    <!-- TOOLS -->
-    <div class="scene" id="scene-tools">
-      <h2 class="scene-title">장비 수령</h2>
-      <p class="narrative" data-delay="300">E가 장비실로 안내한다.</p>
-      <p class="narrative" data-delay="1000"><em>"도구를 잘 다루는 자, 시간을 지배한다."</em></p>
-      <p class="narrative" data-delay="2000"><em>"ELBA의 모든 일은 결국 툴 위에서 움직입니다. 하나씩 수령해 주세요."</em></p>
-      <div class="choices" style="animation-delay:2.8s">
-        <button class="choice-btn tool-claim" data-tool="hiworks" onclick="claimTool('hiworks')">&#x1f4e8; Hiworks &mdash; 사내 메일(@elbacorp.com), 전자결재</button>
-        <button class="choice-btn tool-claim" data-tool="notion" onclick="claimTool('notion')">&#x1f4d3; Notion &mdash; Wiki, DB, 프로젝트 관리</button>
-        <button class="choice-btn tool-claim" data-tool="slack" onclick="claimTool('slack')">&#x1f4ac; Slack &mdash; 메시징, 봇 자동화, 허들</button>
-        <button class="choice-btn tool-claim" data-tool="nas" onclick="claimTool('nas')">&#x1f5c2;&#xfe0f; NAS &mdash; 영상/소스 파일 중앙 저장소</button>
-        <button class="choice-btn tool-claim" data-tool="flex" onclick="claimTool('flex')">&#x1f4cb; FLEX &mdash; 근태, 급여, 인사 관리</button>
-        <button class="choice-btn tool-claim" data-tool="youvico" onclick="claimTool('youvico')">&#x1f3ac; YouViCo &mdash; 영상 피드백 및 협업 플랫폼</button>
-        <button class="choice-btn tool-claim" data-tool="badge" onclick="claimTool('badge')">&#x1f4b3; 명함 + 사원증 + 출입 지문 등록</button>
-      </div>
-      <div id="tools-complete" style="display:none">
-        <hr class="divider">
-        <p class="narrative visible"><em>"모든 장비가 준비되었습니다."</em></p>
-        <div class="warn-box"><div class="warn-title">&#x26a0;&#xfe0f; 주의사항</div><strong>NAS는 로그인 3회 실패 시 계정이 잠깁니다.</strong> 2회 실패 시점에서 반드시 담당자에게 문의하세요!</div>
-        <div class="info-box"><div class="info-title">&#x1f4a1; 업무 사이클</div>문서화 &rarr; 공유 &rarr; 피드백 &rarr; 기록<br>일정은 <strong>Hiworks</strong>에, 피드백은 <strong>Slack/YouViCo</strong>에, 공식 문서는 <strong>Notion</strong>에 저장합니다.</div>
-        <div class="choices" style="opacity:1"><button class="choice-btn" onclick="unlockScene('culture')">다음으로 나아간다</button></div>
-      </div>
-    </div>
-    <!-- CULTURE -->
-    <div class="scene" id="scene-culture">
-      <h2 class="scene-title">ELBA 다움</h2>
-      <p class="narrative" data-delay="300">E가 벽에 걸린 포스터 앞에 멈춰 선다.</p>
-      <p class="narrative" data-delay="1500"><em>"장비도 중요하지만, ELBA에서 가장 중요한 건 '어떻게 일하는가'입니다."</em></p>
-      <p class="narrative" data-delay="3000"><em>"노션에 'BEING ELBA (일 잘하기 필독서)'가 있습니다. 그리고 구주원 대표가 직접 쓴 'CEO Letter'도요."</em></p>
-      <div class="reward-box" style="margin-top:20px;opacity:0;animation:fadeUp .6s ease 4s forwards">
-        <div class="reward-title">&#x1f4dc; ELBA 핵심 문화</div>
-        <p style="margin-top:8px;line-height:2.2">
-          <strong style="color:var(--accent)">ELBA is ABLE</strong> &mdash; 우리는 할 수 있다<br>
-          &#x2022; 콘텐츠를 IP화하여 지속형 미디어 자산을 구축한다<br>
-          &#x2022; 모든 문서는 Notion으로 돌아온다 &mdash; 기록이 곧 자산<br>
-          &#x2022; ELBA Wiki에 지식을 쌓고, 모두가 직접 문서를 고칠 수 있다<br>
-          &#x2022; 타운홀 미팅으로 전사 소통, AI 세미나로 기술 학습<br>
-          &#x2022; 새로운 도전을 두려워하지 않는다
-        </p>
-      </div>
-      <p class="narrative" data-delay="5800"><em>"참고로, CEO Letter를 읽으면 ELBA가 어떤 회사인지 가장 빠르게 이해할 수 있습니다."</em></p>
-      <div class="choices" style="animation-delay:7s">
-        <button class="choice-btn" onclick="cultureChoice('agree')">깊이 공감하며 고개를 끄덕인다</button>
-        <button class="choice-btn" onclick="cultureChoice('question')">"ELBA Wiki는 어떻게 참여하나요?"</button>
-        <button class="choice-btn" onclick="cultureChoice('fire')">가슴이 뜨거워진다</button>
-      </div>
-      <div id="culture-detail" style="display:none"></div>
-    </div>
-    <!-- MISSION -->
-    <div class="scene" id="scene-mission">
-      <h2 class="scene-title">D-Day 미션</h2>
-      <p class="narrative" data-delay="300">E가 화면에 체크리스트를 띄운다.</p>
-      <p class="narrative" data-delay="1300"><em>"<span class="pn"></span>님, 이것이 첫째 날에 완료해야 할 미션입니다."</em></p>
-      <div class="reward-box" style="margin-top:20px;opacity:0;animation:fadeUp .6s ease 2.5s forwards">
-        <div class="reward-title">&#x1f4cb; D-Day 체크리스트</div>
-        <p style="margin-top:8px;line-height:2.2">1. Hiworks 로그인 후 <strong>비밀번호 변경</strong> &amp; 메일 서명 설정<br>2. Notion 워크스페이스 접속 &amp; <strong>ELBA Wiki</strong> 확인<br>3. Slack <strong>#elba-onboarding</strong> 채널에서 온보딩 봇 절차 진행<br>4. Slack <strong>#elba-lounge</strong>에 <strong>인사 멘트</strong> 게시<br>5. NAS 접속 테스트 (&#x26a0;&#xfe0f; 3회 실패 시 잠김!)<br>6. FLEX 앱 설치 &amp; 출퇴근 체크 테스트<br>7. <strong>CEO Letter</strong> 읽기</p>
-      </div>
-      <div class="info-box" style="opacity:0;animation:fadeUp .6s ease 4s forwards">
-        <div class="info-title">&#x1f4c5; 이후 일정 안내</div>
-        <strong>첫째 주(D+1~D+7)</strong>: Wiki 주요 문서 읽기, Notion/Slack 교육자료 학습, 팀별 OJT 시작<br>
-        <strong>첫째 달(D+8~D+30)</strong>: 실무 투입, 중간 점검 미팅, 온보딩 완료 확인
-      </div>
-      <div class="choices" style="animation-delay:5.5s">
-        <button class="choice-btn" onclick="missionChoice('eager')">의욕 넘치게 &mdash; "바로 시작하겠습니다!"</button>
-        <button class="choice-btn" onclick="missionChoice('careful')">신중하게 &mdash; "하나씩 차근차근 해볼게요."</button>
-        <button class="choice-btn" onclick="missionChoice('hungry')">솔직하게 &mdash; "점심은 어떻게 하나요?"</button>
-      </div>
-      <div id="mission-detail" style="display:none"></div>
-    </div>
-    <!-- ENDING -->
-    <div class="scene" id="scene-ending">
-      <h2 class="scene-title">여정의 시작</h2>
-      <p class="narrative" data-delay="300">하루가 저물어 간다.</p>
-      <p class="narrative" data-delay="1500">창밖으로 노을이 비친다.</p>
-      <p class="narrative" data-delay="2800">E가 마지막으로 말한다.</p>
-      <p class="narrative" data-delay="4000"><em>"<span class="pn"></span>님, 오늘 하루 수고하셨습니다."</em></p>
-      <p class="narrative" data-delay="5500"><em>"콘텐츠를 파는 게 아니라, 세계관을 유통한다 &mdash; 그것이 ELBA의 방식입니다."</em></p>
-      <p class="narrative" data-delay="7200"><em>"ELBA is ABLE &mdash; 우리는 할 수 있습니다. 그리고 이제 '우리'에는 당신도 포함됩니다."</em></p>
-      <p class="narrative" data-delay="9000"><em>"앞으로 잘 부탁드립니다, 동료님."</em></p>
-      <p class="narrative" data-delay="10200" style="color:#555;font-size:13px">참고로 팀별로 매우 활발한 인원들이 있다. 잘 찾아보자.</p>
-      <div class="reward-box" style="margin-top:30px;opacity:0;animation:fadeUp .8s ease 11.5s forwards">
-        <div class="reward-title">&#x1f3c6; 온보딩 퀘스트 완료</div>
-        <p style="margin-top:8px;line-height:2"><span class="pn"></span>님의 ELBA 탐험이 완료되었습니다.<br><span style="color:var(--accent)">획득한 칭호: ELBA 탐험가</span><br><span style="color:#888">만난 동료: <span id="final-met">0</span>명</span><br><span style="color:#666;font-size:12px">최종 호감도: <span id="final-favor"></span></span></p>
-      </div>
-      <div class="choices" style="animation-delay:13s"><button class="choice-btn" onclick="restart()">처음부터 다시 탐험하기</button></div>
-    </div>
-  </div>
-  <!-- RIGHT PANEL -->
-  <div id="panel-right">
-    <div class="stat-title">탐험가 정보</div>
-    <div class="stat-item"><span class="stat-key">이름</span><span class="stat-val" id="stat-name">???</span></div>
-    <div class="stat-item"><span class="stat-key">직위</span><span class="stat-val" id="stat-role">신입</span></div>
-    <div class="stat-item"><span class="stat-key">소속</span><span class="stat-val" id="stat-team">미배정</span></div>
-    <div class="stat-item"><span class="stat-key">동료</span><span class="stat-val highlight" id="stat-met">0 / 24</span></div>
-    <div class="stat-item"><span class="stat-key">호감도</span><span class="stat-val highlight" id="stat-favor">&#9733; 0</span></div>
-    <div id="inventory">
-      <div class="stat-title" style="margin-top:24px">인벤토리</div>
-      <div class="inv-item" id="inv-card">&#x1f4c7; 환영 카드</div>
-      <div class="inv-item" id="inv-hiworks">&#x1f4e8; Hiworks 계정</div>
-      <div class="inv-item" id="inv-notion">&#x1f4d3; Notion 접근권</div>
-      <div class="inv-item" id="inv-slack">&#x1f4ac; Slack 계정</div>
-      <div class="inv-item" id="inv-nas">&#x1f5c2;&#xfe0f; NAS 접근권</div>
-      <div class="inv-item" id="inv-flex">&#x1f4cb; FLEX 계정</div>
-      <div class="inv-item" id="inv-youvico">&#x1f3ac; YouViCo 계정</div>
-      <div class="inv-item" id="inv-badge">&#x1f4b3; 사원증</div>
-      <div class="inv-item" id="inv-being">&#x1f4dc; BEING ELBA 필독서</div>
-      <div class="inv-item" id="inv-ceo">&#x1f4e9; CEO Letter</div>
-      <div class="inv-item" id="inv-mission">&#x1f4cb; D-Day 체크리스트</div>
-      <div class="inv-item" id="inv-title">&#x1f3c6; ELBA 탐험가 칭호</div>
-    </div>
-  </div>
-</div>
 <script>
-// ═══ NPC DATA ═══
-const NPC_DEFAULT=[
-  {id:'gjw',name:'구주원',team:'ELBA',role:'대표',greet:'반갑습니다! ELBA에 오신 것을 환영해요.',wave:'(환하게 웃으며 손을 흔든다)',talk:'ELBA의 시작이 궁금하다면 CEO Letter를 꼭 읽어보세요.'},
-  {id:'hbw',name:'홍병우',team:'운영',role:'이사',greet:'어서 와요, 신입분이시군요!',wave:'(다정하게 손을 흔든다)',talk:'사업 쪽 궁금한 게 있으면 언제든 물어보세요.'},
-  {id:'kdh',name:'김대훈',team:'운영',role:'이사',greet:'환영합니다! 잘 적응하고 계신가요?',wave:'(미소를 지으며 고개를 끄덕인다)',talk:'운영 관련 이슈가 생기면 편하게 연락하세요.'},
-  {id:'kjy',name:'김지영',team:'컨텐츠1팀',role:'팀장',greet:'안녕하세요! 1분만 채널 보셨어요?',wave:'(밝게 손을 흔든다)',talk:'숏폼 콘텐츠의 매력은 직접 만들어봐야 알 수 있어요.'},
-  {id:'kcy',name:'김채영',team:'컨텐츠1팀',role:'팀원',greet:'안녕하세요, 반갑습니다!',wave:'(살짝 손을 든다)',talk:'편집 작업 관련해서 궁금한 거 있으면 물어보세요.'},
-  {id:'ngk',name:'남궁기찬',team:'컨텐츠1팀',role:'팀원',greet:'오, 새로운 분이시군요! 반갑습니다.',wave:'(씩 웃으며 손을 흔든다)',talk:'모션그래픽 쪽이면 제가 좀 도와드릴 수 있어요.'},
-  {id:'gmj',name:'감민진',team:'컨텐츠1팀',role:'팀원',greet:'안녕하세요! 잘 부탁드려요.',wave:'(밝게 미소 짓는다)',talk:'채널 운영이 처음이면 걱정 마세요, 금방 적응해요.'},
-  {id:'yhr',name:'윤하린',team:'컨텐츠1팀',role:'팀원',greet:'반가워요! 같이 잘 해봐요.',wave:'(손을 흔든다)',talk:'궁금한 거 있으면 편하게 물어보세요!'},
-  {id:'lth',name:'이태환',team:'컨텐츠2팀',role:'팀장',greet:'어서 오세요! 지식스토리 채널 본 적 있나요?',wave:'(힘차게 손을 흔든다)',talk:'밀리터리 콘텐츠가 이렇게 재밌는 줄 몰랐을 거예요.'},
-  {id:'lj',name:'이준',team:'컨텐츠2팀',role:'팀원',greet:'안녕하세요, 반갑습니다!',wave:'(고개를 끄덕인다)',talk:'대본 작업이 궁금하시면 알려드릴게요.'},
-  {id:'gyh',name:'구예희',team:'컨텐츠2팀',role:'팀원',greet:'환영해요! 잘 적응하길 바라요.',wave:'(미소를 지으며 손을 흔든다)',talk:'기획 쪽 작업 프로세스가 궁금하면 물어보세요.'},
-  {id:'cis',name:'최인실',team:'컨텐츠2팀',role:'팀원',greet:'안녕하세요! 같이 일하게 되어 반가워요.',wave:'(밝게 인사한다)',talk:'촬영 장비 사용법은 OJT에서 배우게 될 거예요.'},
-  {id:'pjy',name:'박준영',team:'컨텐츠2팀',role:'팀원',greet:'반갑습니다!',wave:'(손을 든다)',talk:'영상 편집 관련 질문 환영합니다.'},
-  {id:'lhy',name:'이하영',team:'컨텐츠2팀',role:'팀원',greet:'안녕하세요! 잘 부탁드려요.',wave:'(미소 짓는다)',talk:'콘텐츠 제작 파이프라인은 금방 익숙해질 거예요.'},
-  {id:'pjs',name:'박준식',team:'컨텐츠2팀',role:'팀원',greet:'어서 오세요!',wave:'(반갑게 인사한다)',talk:'NAS 폴더 구조는 처음엔 좀 복잡한데, 금방 익혀요.'},
-  {id:'nsh',name:'노수현',team:'컨텐츠2팀',role:'팀원',greet:'반가워요! 화이팅!',wave:'(활기차게 손을 흔든다)',talk:'다큐 콘텐츠 작업은 정말 보람 있어요.'},
-  {id:'lmk',name:'이민기',team:'개발팀',role:'팀장',greet:'환영합니다! YouViCo 써보셨어요?',wave:'(차분하게 손을 흔든다)',talk:'피드백을 넘어 AI가 직접 수정까지 해주는 게 YouViCo의 방향입니다.'},
-  {id:'jsb',name:'조성빈',team:'개발팀',role:'팀장대리',greet:'안녕하세요! 개발팀입니다.',wave:'(고개를 끄덕이며 인사한다)',talk:'코드 리뷰는 꼼꼼하게 하는 편이에요. 같이 성장하죠.'},
-  {id:'hmh',name:'홍명헌',team:'개발팀',role:'팀원',greet:'반갑습니다!',wave:'(손을 든다)',talk:'개발 환경 세팅에서 막히면 말씀하세요.'},
-  {id:'lsh',name:'임성훈',team:'경영지원실',role:'팀장',greet:'어서 오세요! 온보딩 담당자입니다.',wave:'(따뜻하게 손을 흔든다)',talk:'Zapier 자동화가 궁금하면 물어보세요. 90%까지 자동화하는 게 목표예요.'},
-  {id:'kmj',name:'김미진',team:'경영지원실',role:'팀원',greet:'안녕하세요! 궁금한 거 있으면 편하게 물어보세요.',wave:'(친절하게 미소 짓는다)',talk:'FLEX 출퇴근 관련 문제 생기면 저한테 연락하세요.'},
-  {id:'kth',name:'김태호',team:'경영지원실',role:'팀원',greet:'반갑습니다! 잘 적응하시길 바랍니다.',wave:'(손을 흔든다)',talk:'경영지원 쪽 업무가 궁금하면 알려드릴게요.'},
-  {id:'kkb',name:'김규빈',team:'경영지원실',role:'팀원',greet:'환영합니다!',wave:'(밝게 인사한다)',talk:'지원사업 관련 작업이 꽤 많은데, 같이 해봐요.'},
-  {id:'bgy',name:'변가윤',team:'브랜드경험팀',role:'팀원',greet:'안녕하세요! 디자인 쪽에서 일하고 있어요.',wave:'(손을 흔든다)',talk:'Figma 프로젝트 구조부터 익히면 빠를 거예요.'}
-];
-
-function getNpcData(){
-  const custom=localStorage.getItem('elba-npc-data');
-  if(!custom)return NPC_DEFAULT;
-  try{const c=JSON.parse(custom);return NPC_DEFAULT.map(n=>{const o=c[n.id];return o?{...n,...o}:n})}catch(e){return NPC_DEFAULT}
-}
-
 // ═══ STATE ═══
-let S={name:'',favor:0,team:'',curScene:'prologue',scenes:['prologue'],ch:{ilbunman:0,jisik:0,helchang:0,funlaw:0,others:0},tools:{hiworks:0,notion:0,slack:0,nas:0,flex:0,youvico:0,badge:0},metNpcs:[],inv:[]};
+let S={name:'',floor:0,px:0,py:0,hp:100,maxHp:100,atk:12,def:8,level:1,exp:0,expNext:30,
+       inventory:{},equip:{weapon:null,armor:null},defeated:[],pickedItems:[],mapActive:false};
+const COLS=15,ROWS=15;
 
-function save(){localStorage.setItem('elba-save',JSON.stringify(S))}
+function save(){localStorage.setItem('elba-dungeon',JSON.stringify(S))}
+function notify(t){const e=document.getElementById('notif');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500)}
 
-// ═══ CORE ═══
-function goScene(id){if(!S.scenes.includes(id))return;document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));document.getElementById('scene-'+id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));const n=document.querySelector(`.nav-btn[data-scene="${id}"]`);if(n)n.classList.add('active');S.curScene=id;anim(id);upn();save()}
+// ═══ SCREENS ═══
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('scr-'+id).classList.add('active')}
 
-function unlockScene(id){if(!S.scenes.includes(id)){S.scenes.push(id);const n=document.getElementById('nav-'+id);if(n){n.classList.remove('locked');n.onclick=()=>goScene(id);const l=n.querySelector('.lock-icon');if(l)l.remove()}upProg();save()}
-// NPC encounter chance on scene transition (35%)
-if(id!=='prologue'&&id!=='ending'&&Math.random()<0.35){const unmet=getNpcData().filter(n=>!S.metNpcs.includes(n.id));if(unmet.length>0){const npc=unmet[Math.floor(Math.random()*unmet.length)];setTimeout(()=>showNpc(npc),600);return}}
-goScene(id)}
-
-function anim(id){document.getElementById('scene-'+id).querySelectorAll('.narrative:not(.visible)').forEach(n=>{setTimeout(()=>n.classList.add('visible'),parseInt(n.dataset.delay)||0)})}
-function notify(t){const e=document.getElementById('notification');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500)}
-function upProg(){const p=Math.round(S.scenes.length/8*100);document.getElementById('progress-bar').style.width=p+'%';document.getElementById('progress-pct').textContent=p+'%'}
-function fav(n){S.favor+=n;document.getElementById('stat-favor').innerHTML='&#9733; '+S.favor;save()}
-function inv(i){if(!S.inv.includes(i))S.inv.push(i);const e=document.getElementById('inv-'+i);if(e)e.classList.add('show');save()}
-function upn(){document.querySelectorAll('.pn').forEach(s=>s.textContent=S.name||'탐험가')}
-function hide(scene){const c=document.querySelector(`#scene-${scene}>.choices`);if(c)c.style.display='none'}
-function upMet(){document.getElementById('stat-met').textContent=S.metNpcs.length+' / '+NPC_DEFAULT.length}
-
-// ═══ NPC ENCOUNTER ═══
-let curNpcId=null;
-function showNpc(npc){
-  curNpcId=npc.id;
-  const o=document.getElementById('npc-overlay');
-  const particle=npc.role==='대표'?'이':'이';
-  document.getElementById('npc-announce').textContent='야생의 '+npc.team;
-  document.getElementById('npc-title').innerHTML='<strong>'+npc.name+' '+npc.role+'</strong>'+particle+'(가) 나타났다!';
-  document.getElementById('npc-name').textContent=npc.name;
-  document.getElementById('npc-info').textContent=npc.team+' \u00B7 '+npc.role;
-  document.getElementById('npc-dialog').textContent='"..."';
-  // Reset animations
-  ['npc-announce','npc-title'].forEach(id=>{const el=document.getElementById(id);el.style.animation='none';el.offsetHeight;el.style.animation=''});
-  o.querySelector('.npc-card').style.animation='none';o.querySelector('.npc-card').offsetHeight;o.querySelector('.npc-card').style.animation='';
-  const acts=document.getElementById('npc-actions');
-  acts.style.animation='none';acts.offsetHeight;acts.style.animation='';
-  acts.innerHTML=`<button class="choice-btn" onclick="npcAct('wave')">&#x1f44b; 손 흔들기</button><button class="choice-btn" onclick="npcAct('greet')">&#x1f64f; 인사하기</button><button class="choice-btn" onclick="npcAct('talk')">&#x1f4ac; 말 걸기</button><button class="choice-btn" onclick="npcAct('pass')" style="border-color:#333;color:#555">&#x1f6b6; 지나치기</button>`;
-  o.classList.add('show');
+// ═══ TITLE ═══
+function initTitle(){
+  document.getElementById('game-title').textContent=GAME.title;
+  document.getElementById('game-sub').textContent=GAME.subtitle;
+  const intro=document.getElementById('title-intro');
+  intro.innerHTML='';
+  GAME.intro.forEach((line,i)=>{
+    const p=document.createElement('p');p.className='nar';p.style.animationDelay=(i*0.6+0.5)+'s';
+    p.innerHTML='<em>'+line+'</em>';intro.appendChild(p);
+  });
+  // Check save
+  const saved=localStorage.getItem('elba-dungeon');
+  if(saved){
+    document.getElementById('name-input-row').style.display='none';
+    document.getElementById('title-continue').style.display='block';
+  }
 }
-
-function npcAct(action){
-  const npc=getNpcData().find(n=>n.id===curNpcId);if(!npc)return;
-  const dialog=document.getElementById('npc-dialog');
-  const acts=document.getElementById('npc-actions');
-  if(action==='wave'){dialog.textContent='"'+npc.wave+'"';fav(1);notify(npc.name+'님과 인사했습니다! 호감도 +1')}
-  else if(action==='greet'){dialog.textContent='"'+npc.greet+'"';fav(2);notify(npc.name+'님이 반가워합니다! 호감도 +2')}
-  else if(action==='talk'){dialog.textContent='"'+npc.talk+'"';fav(2);notify(npc.name+'님과 대화했습니다! 호감도 +2')}
-  else{dialog.textContent='(조용히 지나쳤다.)'}
-  if(!S.metNpcs.includes(curNpcId)){S.metNpcs.push(curNpcId);upMet();save()}
-  acts.innerHTML='<button class="choice-btn" onclick="closeNpc()">돌아간다</button>';
+function showNewGame(){
+  localStorage.removeItem('elba-dungeon');
+  document.getElementById('name-input-row').style.display='flex';
+  document.getElementById('title-continue').style.display='none';
 }
-
-function closeNpc(){
-  document.getElementById('npc-overlay').classList.remove('show');
-  const pendingScene=S.scenes[S.scenes.length-1];
-  goScene(pendingScene);
+function startGame(){
+  const name=document.getElementById('name-inp').value.trim();
+  if(!name){document.getElementById('name-inp').focus();return}
+  const b=GAME.playerBase;
+  S={name,floor:0,px:0,py:0,hp:b.hp,maxHp:b.maxHp,atk:b.atk,def:b.def,level:b.level,exp:b.exp,expNext:b.expNext,
+     inventory:{},equip:{weapon:null,armor:null},defeated:[],pickedItems:[],mapActive:false};
+  // Give starting item
+  addItem('potion',2);
+  addItem('staff',1);
+  equipItem('staff');
+  notify('탐험을 시작합니다, '+name+'님!');
+  save();
+  enterFloor(0);
 }
-
-// ═══ SAVE/LOAD ═══
 function loadGame(){
-  const d=localStorage.getItem('elba-save');if(!d)return newGame();
-  try{const saved=JSON.parse(d);Object.assign(S,saved)}catch(e){return newGame()}
-  document.getElementById('continue-overlay').classList.remove('show');
-  // Restore UI
-  document.getElementById('stat-name').textContent=S.name;
-  document.getElementById('stat-team').textContent=S.team||'미배정';
-  document.getElementById('stat-favor').innerHTML='&#9733; '+S.favor;
-  upMet();
-  S.scenes.forEach(id=>{const n=document.getElementById('nav-'+id);if(n){n.classList.remove('locked');n.onclick=()=>goScene(id);const l=n.querySelector('.lock-icon');if(l)l.remove()}});
-  upProg();
-  S.inv.forEach(i=>{const e=document.getElementById('inv-'+i);if(e)e.classList.add('show')});
-  // Restore tool buttons
-  Object.keys(S.tools).forEach(t=>{if(S.tools[t]){const b=document.querySelector(`.tool-claim[data-tool="${t}"]`);if(b)b.classList.add('done')}});
-  if(Object.values(S.tools).every(v=>v)){const tc=document.getElementById('tools-complete');if(tc)tc.style.display='block'}
-  // Restore channel buttons
-  Object.keys(S.ch).forEach(c=>{if(S.ch[c]){const b=document.querySelector(`.ch-btn[data-ch="${c}"]`);if(b)b.classList.add('done')}});
-  goScene(S.curScene);
-  upn();
-  notify(`${S.name}님, 다시 돌아오셨군요!`);
+  const d=localStorage.getItem('elba-dungeon');if(!d)return;
+  try{Object.assign(S,JSON.parse(d))}catch(e){return}
+  notify(S.name+'님, 다시 돌아오셨군요!');
+  enterFloor(S.floor);
 }
 
-function newGame(){
-  localStorage.removeItem('elba-save');
-  document.getElementById('continue-overlay').classList.remove('show');
-  S={name:'',favor:0,team:'',curScene:'prologue',scenes:['prologue'],ch:{ilbunman:0,jisik:0,helchang:0,funlaw:0,others:0},tools:{hiworks:0,notion:0,slack:0,nas:0,flex:0,youvico:0,badge:0},metNpcs:[],inv:[]};
-  anim('prologue');
+// ═══ INVENTORY ═══
+function addItem(id,count){S.inventory[id]=(S.inventory[id]||0)+(count||1);save();renderInv()}
+function useItem(id){
+  if(!S.inventory[id])return false;
+  const item=GAME.items[id];if(!item)return false;
+  if(item.type==='consumable'){
+    S.inventory[id]--;if(S.inventory[id]<=0)delete S.inventory[id];
+    if(item.effect.heal){S.hp=Math.min(S.maxHp,S.hp+item.effect.heal)}
+    save();renderStats();renderInv();return true;
+  }
+  if(item.type==='equip'){equipItem(id);return true}
+  return false;
+}
+function equipItem(id){
+  const item=GAME.items[id];if(!item||item.type!=='equip')return;
+  S.equip[item.slot]=id;
+  save();renderStats();renderInv();
+}
+function getAtkBonus(){const w=S.equip.weapon;return w&&GAME.items[w]?GAME.items[w].effect.atk||0:0}
+function getDefBonus(){const a=S.equip.armor;return a&&GAME.items[a]?GAME.items[a].effect.def||0:0}
+function renderInv(){
+  const panel=document.getElementById('inv-panel');if(!panel)return;
+  let h='<div class="inv-title">인벤토리</div>';
+  const wep=S.equip.weapon?GAME.items[S.equip.weapon]:null;
+  const arm=S.equip.armor?GAME.items[S.equip.armor]:null;
+  if(wep)h+=`<div class="inv-item"><span class="iname">${wep.icon} ${wep.name} [장착]</span><span class="icount">ATK+${wep.effect.atk}</span></div>`;
+  if(arm)h+=`<div class="inv-item"><span class="iname">${arm.icon} ${arm.name} [장착]</span><span class="icount">DEF+${arm.effect.def}</span></div>`;
+  h+='<div style="border-top:1px solid #1a1a18;margin:6px 0"></div>';
+  Object.keys(S.inventory).forEach(id=>{
+    const item=GAME.items[id];if(!item)return;
+    h+=`<div class="inv-item"><span class="iname">${item.icon} ${item.name}</span><span class="icount">x${S.inventory[id]}</span></div>`;
+  });
+  if(Object.keys(S.inventory).length===0&&!wep&&!arm)h+='<div style="color:#333">비어있음</div>';
+  panel.innerHTML=h;
 }
 
-// ═══ PROLOGUE ═══
-function setPlayerName(){const i=document.getElementById('player-name-input'),n=i.value.trim();if(!n){i.focus();return}S.name=n;document.getElementById('stat-name').textContent=n;upn();inv('card');notify(`환영합니다, ${n}님. 탐험을 시작합니다.`);fav(1);setTimeout(()=>unlockScene('company'),1500)}
+// ═══ STATS ═══
+function renderStats(){
+  const totalAtk=S.atk+getAtkBonus();
+  const totalDef=S.def+getDefBonus();
+  const hpPct=Math.round(S.hp/S.maxHp*100);
+  document.getElementById('stats').innerHTML=`
+    <span class="st"><span class="st-label">Lv.</span><span class="st-val st-lv">${S.level}</span></span>
+    <span class="st"><span class="st-label">HP</span><span class="st-val st-hp">${S.hp}/${S.maxHp}</span><span class="hp-bar"><span class="hp-fill${hpPct<30?' low':''}" style="width:${hpPct}%"></span></span></span>
+    <span class="st"><span class="st-label">ATK</span><span class="st-val st-atk">${totalAtk}</span></span>
+    <span class="st"><span class="st-label">DEF</span><span class="st-val st-def">${totalDef}</span></span>
+    <span class="st"><span class="st-label">EXP</span><span class="st-val">${S.exp}/${S.expNext}</span></span>
+    <span class="st"><span class="st-label">적</span><span class="st-val">${floorDefeated()}/${floorEnemyCount()}</span></span>
+  `;
+  // Update battle player HP if in combat
+  const bphp=document.getElementById('b-php');
+  if(bphp){
+    bphp.textContent=S.hp+'/'+S.maxHp;
+    const bar=document.getElementById('b-php-bar');
+    if(bar){bar.style.width=hpPct+'%';if(hpPct<30)bar.classList.add('low');else bar.classList.remove('low')}
+  }
+}
+function floorEnemies(){return GAME.floors[S.floor]?GAME.floors[S.floor].enemies:[]}
+function floorEnemyCount(){return floorEnemies().length}
+function floorDefeated(){return floorEnemies().filter(id=>S.defeated.includes(id)).length}
 
-// ═══ COMPANY ═══
-function companyChoice(c){const d=document.getElementById('company-detail');let h='<hr class="divider">';if(c==='vision'){h+=`<p class="narrative visible"><em>"2025 전사 목표는 세 가지입니다."</em></p><div class="info-box" style="animation:fadeUp .6s ease .3s forwards;opacity:0"><div class="info-title">&#x1f3af; 2025 전사 목표</div>1. 투자 유치 (Pre-A 라운드)<br>2. 복지 및 처우 개선 30% (전년 대비)<br>3. 매출 3배 이상 성장</div><p class="narrative visible" style="animation-delay:.6s"><em>"단순히 크는 것이 아니라, 콘텐츠를 IP화하여 광고, 출판, OTT, 커머스로 확장하는 지속형 미디어 자산을 만들어갑니다."</em></p>`;fav(2);notify('호감도 +2')}
-else if(c==='structure'){h+=`<p class="narrative visible"><em>"현재 ELBA 조직은 이렇습니다."</em></p><div class="info-box" style="animation:fadeUp .6s ease .3s forwards;opacity:0"><div class="info-title">&#x1f3e2; ELBA 조직도</div><strong>대표</strong> 구주원<br><strong>운영</strong> 홍병우 이사, 김대훈 이사<br><br>&#x1f3ac; <strong>컨텐츠1팀</strong> &mdash; 김지영 팀장 (1분만, 1곡만)<br>&#x1f30d; <strong>컨텐츠2팀</strong> &mdash; 이태환 팀장 (지식스토리, 펀무법인, 헬창TV)<br>&#x1f4bb; <strong>개발팀</strong> &mdash; 이민기 팀장 (YouViCo)<br>&#x1f3e2; <strong>경영지원실</strong> &mdash; 임성훈 팀장 (경영, B2G, 자동화)<br>&#x2728; <strong>브랜드경험팀</strong> &mdash; 디자인, 브랜딩</div>`;fav(2);notify('호감도 +2')}
-else{h+='<p class="narrative visible"><em>"행동으로 보여주는 타입이시군요. 마음에 듭니다."</em></p>';fav(1)}
-h+='<div class="choices" style="opacity:1;margin-top:20px"><button class="choice-btn" onclick="unlockScene(\'channels\')">다음으로 나아간다</button></div>';d.innerHTML=h;d.style.display='block';hide('company')}
+// ═══ DUNGEON MAP ═══
+function enterFloor(idx){
+  S.floor=idx;
+  const flObj=GAME.floors[idx];if(flObj)delete _posCache[flObj.id]; // clear cache
+  const fl=GAME.floors[idx];if(!fl)return;
+  S.px=fl.playerStart.x;S.py=fl.playerStart.y;
+  showScreen('dungeon');
+  document.getElementById('floor-name').textContent=fl.name;
+  document.getElementById('floor-num').textContent=`B${fl.id}F`;
+  const intro=document.getElementById('floor-intro');
+  intro.textContent=fl.intro;intro.style.animation='none';intro.offsetHeight;intro.style.animation='';intro.className='nar';
+  renderStats();renderMap();renderInv();
+  startEnemyMovement();
+  save();
+  // Boss floor special effects
+  const torch=document.getElementById('torch-overlay');
+  const mapC=document.getElementById('map-container');
+  if(fl.theme==='throne'){
+    // Disable torch, add reveal + flash + shake
+    torch.style.display='none';
+    const reveal=document.createElement('div');reveal.id='throne-reveal';mapC.appendChild(reveal);
+    const flash=document.createElement('div');flash.id='screen-flash';document.body.appendChild(flash);
+    document.getElementById('wrap').classList.add('boss-shake');
+    setTimeout(()=>{reveal.remove();flash.remove();document.getElementById('wrap').classList.remove('boss-shake')},3000);
+    setTimeout(()=>{const m=document.getElementById('tilemap');if(m)m.focus()},3200);
+  } else {
+    torch.style.display='';
+    // Remove leftover boss effects
+    const old=document.getElementById('throne-reveal');if(old)old.remove();
+    setTimeout(()=>{const m=document.getElementById('tilemap');if(m)m.focus()},100);
+  }
+}
 
-// ═══ CHANNELS ═══
-function exploreChannel(ch){if(S.ch[ch])return;S.ch[ch]=1;save();const info={
-ilbunman:{name:'1분만',sub:'113만',desc:'ELBA 대표 채널. "1분의 한계가 없음을 증명하자." 짧고 강렬한 지식 콘텐츠를 YouTube Shorts 중심으로 제작합니다. 1분만 JAPAN으로 글로벌 확장 중이며, IP 사업화까지 추진 중입니다.',team:'컨텐츠1팀'},
-jisik:{name:'지식스토리',sub:'67.2만',desc:'"밀리터리계의 1인자가 되고 이를 유지하자." 서사적 구조 중심의 롱폼 콘텐츠. 월 평균 조회수 500만 이상. 넷플릭스 배급, 다큐 제작, 방산기업 협력 추진 중.',team:'컨텐츠2팀'},
-helchang:{name:'헬창TV',sub:'47.5만',desc:'"유쾌하고 건강하게 운동합시다!" 피트니스 인플루언서와 공동 운영. 스튜디오 전용 세트 촬영.',team:'컨텐츠2팀 (공동운영)'},
-funlaw:{name:'펀무법인',sub:'성장 중',desc:'"죄란 무엇인가, 어려운 것이 바로 죄다." 법무법인 호암과 공동기획. 실제 변호사 출연.',team:'컨텐츠2팀 (공동운영)'},
-others:{name:'기타 채널',sub:'다수',desc:'<strong>이랜드 ELAND</strong>: 이랜드 그룹 공식 유튜브 연간 위탁 운영<br><strong>1곡만</strong>: 음악 채널 (컨텐츠1팀)<br><strong>Idiot Factory</strong>: 사회풍자 숏츠<br><strong>욘니와치애</strong>: 185만 구독, 광고 대행(MCN5팀)',team:'각 팀 분담'}
-};const c=info[ch],d=document.getElementById('channel-detail');
-let h=`<hr class="divider"><div class="info-box"><div class="info-title">&#x1f4fa; ${c.name} (${c.sub})</div>${c.desc}<br><span style="color:#888">운영: ${c.team}</span></div>`;
-document.querySelector(`.ch-btn[data-ch="${ch}"]`).classList.add('done');fav(1);
-if(Object.values(S.ch).every(v=>v)){h+=`<div class="reward-box" style="margin-top:16px"><div class="reward-title">&#x2728; 채널 마스터</div>모든 채널을 탐색했습니다! 연간 약 140개 이상의 브랜드 캠페인을 운영합니다. 호감도 +3</div>`;fav(3);notify('모든 채널을 탐색했습니다!');
-h+='<div class="choices" style="opacity:1;margin-top:16px"><button class="choice-btn" onclick="unlockScene(\'team\')">다음으로 나아간다</button></div>'}
-d.innerHTML=h;d.style.display='block'}
+function renderMap(){
+  const fl=GAME.floors[S.floor];if(!fl)return;
+  const grid=document.getElementById('tilemap');
+  grid.style.gridTemplateColumns=`repeat(${COLS},24px)`;
+  grid.innerHTML='';
+  // Build enemy position map
+  const enemyPos={};
+  fl.enemies.forEach(eid=>{
+    const e=ENEMIES[eid];if(!e)return;
+    // Deterministic position from map: place enemies at valid floor tiles
+    const pos=getEnemyPos(eid,fl);
+    if(pos)enemyPos[pos.x+','+pos.y]=eid;
+  });
+  // Build item position map
+  const itemPos={};
+  fl.items.forEach((iid,i)=>{
+    const key=S.floor+'-'+iid+'-'+i;
+    if(S.pickedItems.includes(key))return;
+    const pos=getItemPos(i,fl);
+    if(pos)itemPos[pos.x+','+pos.y]={id:iid,key};
+  });
 
-// ═══ TEAM ═══
-function chooseTeam(t){const teams={
-c1:{name:'컨텐츠1팀',leader:'김지영 팀장',desc:'1분만(113만), 1곡만 채널을 기획/제작합니다. 대본 기획-작성-피드백, 모션그래픽 편집, 썸네일 제작, 번역 관리, YouViCo 활용, NAS 폴더 구조까지 OJT에서 배우게 됩니다.'},
-c2:{name:'컨텐츠2팀',leader:'이태환 팀장',desc:'지식스토리, 펀무법인, 헬창TV 등 채널 운영. 롱폼-숏폼-다큐 제작 파이프라인, 촬영 장비, 외부 협업 프로세스를 OJT에서 학습합니다.'},
-dev:{name:'개발팀',leader:'이민기 팀장',desc:'YouViCo 플랫폼 아키텍처, 개발 환경, 코드 리뷰, 배포 플로우를 OJT에서 익힙니다. Shapy AI 연구도 담당합니다.'},
-biz:{name:'경영지원실',leader:'임성훈 팀장',desc:'전자결재, FLEX 관리, Zapier 자동화, 입출금 원장, API 연동을 OJT에서 학습합니다. B2G 사업도 담당합니다.'},
-brand:{name:'브랜드경험팀',leader:'변가윤 팀원',desc:'디자인 프로세스 전반, Figma 프로젝트 구조를 OJT에서 학습합니다.'}
-};const tm=teams[t];S.team=tm.name;document.getElementById('stat-team').textContent=tm.name;save();
-document.getElementById('team-detail').innerHTML=`<hr class="divider"><div class="reward-box"><div class="reward-title">&#x1f465; 팀 배정 완료</div><p><strong>${tm.name}</strong>에 배정되었습니다.</p><p style="margin-top:6px;color:#888">${tm.desc}</p><p style="margin-top:6px;color:#666;font-size:12px">팀 리더: ${tm.leader}</p></div><p class="narrative visible" style="margin-top:16px"><em>"좋습니다. ${tm.name}에서 좋은 활약 기대합니다, <span class="pn">${S.name}</span>님."</em></p><div class="choices" style="opacity:1;margin-top:16px"><button class="choice-btn" onclick="unlockScene('tools')">다음으로 나아간다</button></div>`;
-document.getElementById('team-detail').style.display='block';hide('team');fav(2);notify(`${tm.name}에 합류했습니다!`)}
+  for(let y=0;y<ROWS;y++){
+    const row=fl.map[y]||'';
+    for(let x=0;x<COLS;x++){
+      const ch=row[x]||'#';
+      const div=document.createElement('div');
+      const coordKey=x+','+y;
 
-// ═══ TOOLS ═══
-function claimTool(t){if(S.tools[t])return;S.tools[t]=1;save();document.querySelector(`.tool-claim[data-tool="${t}"]`).classList.add('done');inv(t);
-const n={hiworks:'Hiworks 계정',notion:'Notion 접근권',slack:'Slack 계정',nas:'NAS 접근권',flex:'FLEX 계정',youvico:'YouViCo 계정',badge:'사원증'};
-notify(`${n[t]}을(를) 획득했습니다!`);fav(1);
-if(Object.values(S.tools).every(v=>v))setTimeout(()=>{document.getElementById('tools-complete').style.display='block'},800)}
+      if(x===S.px&&y===S.py){
+        div.className='t t-p';div.textContent='@';
+      } else if(enemyPos[coordKey]){
+        const eid=enemyPos[coordKey];
+        const e=ENEMIES[eid];
+        const dead=S.defeated.includes(eid);
+        const color=TEAM_COLORS[e.team]||'#888';
+        div.className='t t-e'+(dead?' dead':'');
+        div.style.background=dead?'#111':color+'30';div.style.color=dead?'#333':color;
+        div.textContent=e.name[0];
+        div.title=e.name+' '+e.title;
+      } else if(itemPos[coordKey]){
+        div.className='t t-i';div.textContent='✦';
+      } else if(fl.stairsPos&&x===fl.stairsPos.x&&y===fl.stairsPos.y){
+        div.className='t t-s';div.textContent='>';
+      } else if(ch==='#'){
+        div.className='t t-w';div.textContent='·';
+      } else {
+        div.className='t t-f';div.textContent='·';
+      }
+      grid.appendChild(div);
+    }
+  }
+  // Zone display
+  document.getElementById('map-zone').textContent=fl.name+' — '+fl.intro.substring(0,30)+'...';
+  S.mapActive=true;
+}
 
-// ═══ CULTURE ═══
-function cultureChoice(c){const d=document.getElementById('culture-detail');
-const r={agree:'"그 마음가짐이면 빠르게 성장하실 겁니다."',question:'"누구나 직접 Wiki 문서를 만들고 수정할 수 있습니다. ELBA Wiki 작성 규칙 문서를 참고하세요."',fire:'"그 열정, ELBA에 딱 맞는 분이시네요! 타운홀 미팅과 AI 활용 세미나도 기대해 주세요."'};
-d.innerHTML=`<hr class="divider"><p class="narrative visible"><em>${r[c]}</em></p><div class="choices" style="opacity:1;margin-top:16px"><button class="choice-btn" onclick="unlockScene('mission')">다음으로 나아간다</button></div>`;
-d.style.display='block';hide('culture');inv('being');inv('ceo');fav(c==='fire'?3:2);if(c==='fire')notify('열정 보너스! 호감도 +3')}
+// Deterministic enemy/item placement (no overlaps)
+const _posCache={};
+function getAllPositions(fl){
+  const key=fl.id;
+  if(_posCache[key])return _posCache[key];
+  const validTiles=[];
+  for(let y=1;y<ROWS-1;y++)for(let x=1;x<COLS-1;x++){
+    if(fl.map[y][x]==='.'&&!(x===fl.playerStart.x&&y===fl.playerStart.y)&&
+       !(fl.stairsPos&&x===fl.stairsPos.x&&y===fl.stairsPos.y))
+      validTiles.push({x,y});
+  }
+  // Assign unique positions to each enemy using seeded shuffle
+  const used=new Set();
+  const positions={};
+  fl.enemies.forEach(eid=>{
+    let hash=0;for(let i=0;i<eid.length;i++)hash=((hash<<5)-hash)+eid.charCodeAt(i);
+    hash=Math.abs(hash);
+    let idx=hash%validTiles.length;
+    let tries=0;
+    while(used.has(idx)&&tries<validTiles.length){idx=(idx+1)%validTiles.length;tries++}
+    used.add(idx);
+    positions[eid]=validTiles[idx];
+  });
+  // Items
+  fl.items.forEach((iid,i)=>{
+    let hash=(i+1)*7919+fl.id*131;
+    let idx=Math.abs(hash)%validTiles.length;
+    let tries=0;
+    while(used.has(idx)&&tries<validTiles.length){idx=(idx+1)%validTiles.length;tries++}
+    used.add(idx);
+    positions['item_'+i]=validTiles[idx];
+  });
+  _posCache[key]=positions;
+  return positions;
+}
+function getEnemyPos(eid,fl){return getAllPositions(fl)[eid]}
+function getItemPos(idx,fl){return getAllPositions(fl)['item_'+idx]}
 
-// ═══ MISSION ═══
-function missionChoice(t){const r={eager:'"그 열정이면 일주일 안에 에이스가 되겠는데요!"',careful:'"차분하고 꼼꼼한 접근, 좋습니다."',hungry:'"첫 날에는 보통 전사가 같이 갑니다. 안 데려가면 Slack에서 항의하세요."'};
-document.getElementById('mission-detail').innerHTML=`<hr class="divider"><p class="narrative visible"><em>${r[t]}</em></p><p class="narrative visible" style="animation-delay:.5s"><em>"자, 그럼 오늘 하루를 마무리해 볼까요?"</em></p><div class="choices" style="opacity:1;margin-top:16px"><button class="choice-btn" onclick="finMission()">하루를 마무리한다</button></div>`;
-document.getElementById('mission-detail').style.display='block';hide('mission');inv('mission');fav(t==='hungry'?3:2);if(t==='hungry')notify('솔직함 보너스! 호감도 +3')}
+// ═══ MOVEMENT ═══
+function movePlayer(dx,dy){
+  if(!S.mapActive)return;
+  const fl=GAME.floors[S.floor];if(!fl)return;
+  const nx=S.px+dx,ny=S.py+dy;
+  if(nx<0||nx>=COLS||ny<0||ny>=ROWS)return;
+  if(fl.map[ny][nx]==='#')return;
+  // Check enemy at target
+  const eAtTarget=getEnemyAtPos(nx,ny,fl);
+  if(eAtTarget&&!S.defeated.includes(eAtTarget)){startBattle(eAtTarget);return}
+  // Check item at target
+  const iAtTarget=getItemAtPos(nx,ny,fl);
+  if(iAtTarget){pickupItem(iAtTarget);/* still move */}
+  S.px=nx;S.py=ny;save();
+  renderMap();
+  // Check if standing on a remaining enemy (edge case from load)
+  const eHere=getEnemyAtPos(nx,ny,fl);
+  if(eHere&&!S.defeated.includes(eHere)){startBattle(eHere);return}
+  // Check stairs
+  if(fl.stairsPos&&nx===fl.stairsPos.x&&ny===fl.stairsPos.y){
+    if(floorDefeated()>=floorEnemyCount()){
+      S.mapActive=false;
+      setTimeout(()=>clearFloor(),300);
+    } else {
+      notify('모든 적을 처치해야 다음 층으로 내려갈 수 있습니다. ('+floorDefeated()+'/'+floorEnemyCount()+')');
+    }
+  }
+}
 
-function finMission(){inv('title');notify('칭호를 획득했습니다: ELBA 탐험가');unlockScene('ending');setTimeout(()=>{const f=document.getElementById('final-favor');if(f)f.textContent='\u2605 '+S.favor;const m=document.getElementById('final-met');if(m)m.textContent=S.metNpcs.length},500)}
-function restart(){localStorage.removeItem('elba-save');location.reload()}
+function getEnemyAtPos(x,y,fl){
+  for(const eid of fl.enemies){
+    const pos=getEnemyPos(eid,fl);
+    if(pos&&pos.x===x&&pos.y===y)return eid;
+  }return null;
+}
+function getItemAtPos(x,y,fl){
+  for(let i=0;i<fl.items.length;i++){
+    const key=S.floor+'-'+fl.items[i]+'-'+i;
+    if(S.pickedItems.includes(key))continue;
+    const pos=getItemPos(i,fl);
+    if(pos&&pos.x===x&&pos.y===y)return{id:fl.items[i],key,idx:i};
+  }return null;
+}
+function pickupItem(info){
+  addItem(info.id,1);
+  S.pickedItems.push(info.key);
+  const item=GAME.items[info.id];
+  notify(GAME.battle.itemFound.replace('{icon}',item.icon).replace('{item}',item.name));
+  save();
+}
+
+// Keyboard
+document.addEventListener('keydown',e=>{
+  if(!S.mapActive)return;
+  if(document.getElementById('battle').classList.contains('show'))return;
+  const k=e.key;
+  if(k==='ArrowUp'||k==='w'){e.preventDefault();movePlayer(0,-1)}
+  else if(k==='ArrowDown'||k==='s'){e.preventDefault();movePlayer(0,1)}
+  else if(k==='ArrowLeft'||k==='a'){e.preventDefault();movePlayer(-1,0)}
+  else if(k==='ArrowRight'||k==='d'){e.preventDefault();movePlayer(1,0)}
+});
+
+// ═══ ENEMY MOVEMENT ═══
+let enemyMoveTimer=null;
+function startEnemyMovement(){
+  stopEnemyMovement();
+  enemyMoveTimer=setInterval(()=>{
+    if(!S.mapActive)return;
+    const fl=GAME.floors[S.floor];if(!fl)return;
+    const positions=getAllPositions(fl);
+    let moved=false;
+    fl.enemies.forEach(eid=>{
+      if(S.defeated.includes(eid))return;
+      if(Math.random()>0.7)return; // 70% chance to move each tick
+      const pos=positions[eid];if(!pos)return;
+      const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
+      const dir=dirs[Math.floor(Math.random()*dirs.length)];
+      const nx=pos.x+dir[0],ny=pos.y+dir[1];
+      if(nx<1||nx>=COLS-1||ny<1||ny>=ROWS-1)return;
+      if(fl.map[ny][nx]!=='.'&&fl.map[ny][nx]!=='+')return;
+      // Don't move onto another enemy, stairs, item, or player start
+      const occupied=Object.entries(positions).some(([k,p])=>k!==eid&&p.x===nx&&p.y===ny);
+      if(occupied)return;
+      if(fl.stairsPos&&nx===fl.stairsPos.x&&ny===fl.stairsPos.y)return;
+      // Check if player is there → trigger battle!
+      if(nx===S.px&&ny===S.py){startBattle(eid);return}
+      pos.x=nx;pos.y=ny;moved=true;
+    });
+    if(moved)renderMap();
+  },1000);
+}
+function stopEnemyMovement(){if(enemyMoveTimer){clearInterval(enemyMoveTimer);enemyMoveTimer=null}}
+
+// ═══ TORCH EFFECT ═══
+document.getElementById('map-container').addEventListener('mousemove',e=>{
+  const rect=document.getElementById('map-container').getBoundingClientRect();
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  const overlay=document.getElementById('torch-overlay');
+  overlay.style.setProperty('--torch-x',x+'px');
+  overlay.style.setProperty('--torch-y',y+'px');
+});
+
+// ═══ BATTLE ═══
+let battleState=null;
+function startBattle(eid){
+  S.mapActive=false;
+  const e=ENEMIES[eid];if(!e)return;
+  const isBoss=e.isBoss||false;
+  const msg=isBoss?GAME.battle.bossEncounter:GAME.battle.encounter;
+  battleState={eid,ehp:e.hp,emaxHp:e.hp,eatk:e.atk,edef:e.def,defending:false,log:[]};
+
+  const box=document.getElementById('battle-box');
+  const color=TEAM_COLORS[e.team]||'#888';
+  box.innerHTML=`
+    <div class="b-announce">${e.team}</div>
+    <div class="b-title"><strong>${e.name}</strong> — ${e.title}</div>
+    <div class="b-card" id="b-card">
+      <div class="b-name" style="color:${color}">${e.name}</div>
+      <div class="b-sub">${e.team} · ${e.role} · ${e.title}</div>
+      <div class="b-hp-row">HP <span id="b-ehp">${battleState.ehp}</span>/${battleState.emaxHp}
+        <span class="hp-bar" style="width:80px"><span class="hp-fill" id="b-ehp-bar" style="width:100%"></span></span>
+      </div>
+      <div class="b-dialog" id="b-dialog">"${e.intro}"</div>
+    </div>
+    <div id="b-player" style="background:#1a1510;border:1px solid #3a3020;padding:12px 16px;margin-bottom:12px;font-size:12px;opacity:0;animation:fadeUp .5s .9s forwards">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="color:#c4b898;font-weight:700">${S.name}</span>
+        <span style="color:#8a7a5a">Lv.${S.level}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="color:#5a9a4a">HP</span>
+        <span id="b-php" style="color:#5a9a4a;font-weight:700">${S.hp}/${S.maxHp}</span>
+        <span class="hp-bar" style="width:100px"><span class="hp-fill" id="b-php-bar" style="width:${Math.round(S.hp/S.maxHp*100)}%"></span></span>
+      </div>
+      <div style="display:flex;gap:12px;color:#8a7a5a">
+        <span>ATK <span style="color:#c4651a">${S.atk+getAtkBonus()}</span></span>
+        <span>DEF <span style="color:#3a5a8b">${S.def+getDefBonus()}</span></span>
+        <span id="b-inv-summary"></span>
+      </div>
+    </div>
+    <div id="b-log"></div>
+    <div id="b-actions">
+      <button class="btn" onclick="battleAction('attack')">⚔️ 공격</button>
+      <button class="btn" onclick="battleAction('defend')">🛡️ 방어</button>
+      <button class="btn" onclick="battleAction('item')">🧪 아이템 ${S.inventory.potion?'(물약 x'+S.inventory.potion+')':''}</button>
+      <button class="btn" onclick="battleAction('flee')" style="border-color:#333;color:#555">🏃 도망</button>
+    </div>
+  `;
+  // Reset animations
+  box.querySelectorAll('[class*="b-"]').forEach(el=>{el.style.animation='none';el.offsetHeight;el.style.animation=''});
+  document.getElementById('battle').classList.add('show');
+  if(isBoss){document.getElementById('wrap').classList.add('boss-shake');const bf=document.createElement('div');bf.id='screen-flash';document.body.appendChild(bf);setTimeout(()=>bf.remove(),1000)}
+}
+
+function battleAction(action){
+  const bs=battleState;if(!bs||bs.busy)return;
+  bs.busy=true;
+  const e=ENEMIES[bs.eid];
+  const totalAtk=S.atk+getAtkBonus();
+  const totalDef=S.def+getDefBonus();
+  let playerActed=true;
+
+  if(action==='attack'){
+    // Crit (15%) / Miss (10%)
+    const roll=Math.random();
+    if(roll<0.10){
+      blogAdd('공격이 빗나갔다!','miss');
+    } else {
+      const isCrit=roll>0.85;
+      let dmg=Math.max(1,totalAtk-bs.edef+Math.floor(Math.random()*6)-2);
+      if(isCrit)dmg=Math.floor(dmg*1.8);
+      bs.ehp=Math.max(0,bs.ehp-dmg);
+      const wepName=S.equip.weapon?GAME.items[S.equip.weapon].name:'맨손';
+      if(isCrit)blogAdd('★ 치명타! '+wepName+'이(가) 빛난다! '+e.name+'에게 '+dmg+' 데미지!','crit');
+      else blogAdd(GAME.battle.playerAttack.replace('{weapon}',wepName).replace('{enemy}',e.name).replace('{dmg}',dmg),'dmg');
+      updateEnemyHP();
+      if(bs.ehp<=0){enemyDefeated();return}
+    }
+    bs.defending=false;
+  } else if(action==='defend'){
+    blogAdd(GAME.battle.playerDefend,'info');
+    bs.defending=true;
+  } else if(action==='item'){
+    if(S.inventory.potion){
+      useItem('potion');blogAdd('시간의 물약을 사용했다! HP +30','heal');
+    } else if(S.inventory.scroll){
+      S.inventory.scroll--;if(S.inventory.scroll<=0)delete S.inventory.scroll;
+      bs.eatk=Math.max(1,bs.eatk-5);blogAdd('결재의 주문서! 적 ATK -5','info');renderInv();
+    } else {blogAdd('사용할 아이템이 없다!','info');bs.busy=false;return}
+  } else if(action==='flee'){
+    if(e.isBoss){blogAdd('보스에게서는 도망칠 수 없다!','info');bs.busy=false;return}
+    if(Math.random()<0.5){blogAdd(GAME.battle.fled,'info');setTimeout(()=>endBattle(),500);return}
+    else{blogAdd('도망에 실패했다!','info')}
+  }
+
+  // Enemy turn(s)
+  setTimeout(()=>{
+    // Boss double attack at <50% HP
+    const attacks=e.isBoss&&bs.ehp<bs.emaxHp*0.5?2:1;
+    for(let i=0;i<attacks;i++){
+      setTimeout(()=>{
+        const eRoll=Math.random();
+        if(eRoll<0.08){blogAdd(e.name+'의 공격이 빗나갔다!','miss');
+        } else {
+          const eCrit=eRoll>0.88;
+          let edmg=Math.max(1,bs.eatk-totalDef+Math.floor(Math.random()*5)-1);
+          if(bs.defending)edmg=Math.floor(edmg/2);
+          if(eCrit)edmg=Math.floor(edmg*1.7);
+          S.hp=Math.max(0,S.hp-edmg);
+          if(eCrit)blogAdd('★ '+e.name+'의 치명타! '+e.skill+'! '+edmg+' 데미지!','crit');
+          else blogAdd(GAME.battle.enemyAttack.replace('{enemy}',e.name).replace('{skill}',e.skill).replace('{dmg}',edmg),'dmg');
+          renderStats();
+        }
+        // Boss heal at <30% HP (once)
+        if(e.isBoss&&bs.ehp>0&&bs.ehp<bs.emaxHp*0.3&&!bs.healed){
+          bs.healed=true;const heal=Math.floor(bs.emaxHp*0.15);
+          bs.ehp=Math.min(bs.emaxHp,bs.ehp+heal);
+          blogAdd(e.name+'이(가) 기력을 회복했다! HP +'+heal,'heal');
+          updateEnemyHP();
+        }
+        // Check death
+        if(S.hp<=0){playerDied();return}
+        if(i===attacks-1)bs.busy=false;
+      },i*500);
+    }
+    if(attacks===1)bs.busy=false;
+  },500);
+}
+function playerDied(){
+  battleState=null;
+  document.getElementById('battle').classList.remove('show');
+  document.getElementById('gameover').classList.add('show');
+  stopEnemyMovement();
+}
+function retryFloor(){
+  document.getElementById('gameover').classList.remove('show');
+  const b=GAME.playerBase;
+  S.hp=S.maxHp;
+  // Remove defeated enemies from current floor only
+  const fl=GAME.floors[S.floor];
+  S.defeated=S.defeated.filter(id=>!fl.enemies.includes(id));
+  S.pickedItems=S.pickedItems.filter(k=>!k.startsWith(S.floor+'-'));
+  save();
+  enterFloor(S.floor);
+}
+
+function blogAdd(text,cls){
+  const log=document.getElementById('b-log');
+  const p=document.createElement('p');p.className=cls||'';p.textContent=text;
+  log.appendChild(p);log.scrollTop=log.scrollHeight;
+}
+function updateEnemyHP(){
+  const bs=battleState;
+  document.getElementById('b-ehp').textContent=bs.ehp;
+  const pct=Math.round(bs.ehp/bs.emaxHp*100);
+  const bar=document.getElementById('b-ehp-bar');
+  bar.style.width=pct+'%';
+  if(pct<30)bar.classList.add('low');
+  document.getElementById('b-card').classList.add('shake');
+  setTimeout(()=>document.getElementById('b-card').classList.remove('shake'),300);
+}
+function enemyDefeated(){
+  const bs=battleState;const e=ENEMIES[bs.eid];
+  S.defeated.push(bs.eid);
+  S.exp+=e.exp;
+  blogAdd(GAME.battle.enemyDefeated.replace('{enemy}',e.name).replace('{exp}',e.exp),'info');
+  document.getElementById('b-dialog').textContent='"'+e.defeat+'"';
+  // Level up check
+  while(S.exp>=S.expNext){
+    S.exp-=S.expNext;S.level++;
+    const b=GAME.levelUpBonus;
+    S.maxHp+=b.hp;S.hp=S.maxHp;S.atk+=b.atk;S.def+=b.def;S.expNext+=b.expNext;
+    blogAdd(GAME.battle.levelUp.replace('{level}',S.level).replace('{hp}',b.hp).replace('{atk}',b.atk).replace('{def}',b.def),'info');
+    notify('레벨 업! Lv.'+S.level);
+  }
+  save();renderStats();
+  // If boss defeated → go straight to ending
+  if(e.isBoss){
+    document.getElementById('b-actions').innerHTML='<button class="btn btn-accent" onclick="endBattleToEnding()">운명을 받아들인다</button>';
+  } else {
+    document.getElementById('b-actions').innerHTML='<button class="btn btn-accent" onclick="endBattle()">돌아간다</button>';
+  }
+}
+function endBattleToEnding(){
+  document.getElementById('battle').classList.remove('show');
+  document.getElementById('wrap').classList.remove('boss-shake');
+  battleState=null;stopEnemyMovement();
+  showEnding();
+}
+function endBattle(){
+  document.getElementById('battle').classList.remove('show');
+  document.getElementById('wrap').classList.remove('shake');
+  document.getElementById('wrap').classList.remove('boss-shake');
+  battleState=null;
+  S.mapActive=true;renderMap();renderStats();
+  startEnemyMovement();
+  setTimeout(()=>{const m=document.getElementById('tilemap');if(m)m.focus()},100);
+}
+
+// ═══ FLOOR CLEAR ═══
+function clearFloor(){
+  const fl=GAME.floors[S.floor];
+  if(S.floor>=GAME.floors.length-1){showEnding();return}
+  const content=document.getElementById('clear-content');
+  content.innerHTML=`
+    <h2 style="font-family:'Noto Serif KR',serif;color:var(--bright);font-size:20px;margin-bottom:20px">${fl.name} — 클리어!</h2>
+    <p class="nar" style="animation-delay:.3s"><em>${fl.clear}</em></p>
+    <div class="box box-accent" style="opacity:0;animation:fadeUp .6s .8s forwards">
+      <div class="box-title t-accent">클리어 보상</div>
+      HP가 완전히 회복되었습니다!
+    </div>
+    <button class="btn btn-accent" style="margin-top:20px" onclick="nextFloor()">다음 층으로 내려간다</button>
+  `;
+  S.hp=S.maxHp;save();
+  showScreen('clear');
+}
+function nextFloor(){enterFloor(S.floor+1)}
+
+// ═══ ENDING ═══
+function showEnding(){
+  stopEnemyMovement();
+  const content=document.getElementById('ending-content');
+  const t=GAME.ending.lines.length;
+  let h=`<div style="text-align:center;margin-bottom:32px">
+    <div style="font-size:11px;color:var(--ink2);letter-spacing:4px;margin-bottom:8px;opacity:0;animation:fadeUp 1s .5s forwards">EPILOGUE</div>
+    <h2 style="font-family:'Noto Serif KR',serif;color:var(--accent);font-size:24px;opacity:0;animation:fadeUp 1s 1s forwards">${GAME.ending.title}</h2>
+    <div style="width:60px;height:2px;background:var(--accent);margin:16px auto;opacity:0;animation:fadeUp 1s 1.5s forwards"></div>
+  </div>`;
+  GAME.ending.lines.forEach((line,i)=>{
+    h+=`<p class="nar" style="animation-delay:${(i*1.5+2)}s;text-align:center"><em>${line}</em></p>`;
+  });
+  const delay=t*1.5+3;
+  h+=`<div style="text-align:center;margin:32px 0;opacity:0;animation:fadeUp 1s ${delay}s forwards">
+    <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);margin-bottom:24px"></div>
+    <div style="font-size:11px;color:var(--ink2);letter-spacing:3px;margin-bottom:16px">그리고 이야기는 현실로 이어진다...</div>
+    <p style="color:var(--ink);font-size:14px;line-height:2">
+      이 동굴의 이름은 <strong style="color:var(--accent)">ELBA</strong>.<br>
+      당신이 만난 적들은, 사실 앞으로 함께할 <strong>동료</strong>들이다.<br>
+      그들의 스킬은 실제 업무 역량이고, 던전의 각 층은 팀의 영역이다.<br><br>
+      <span style="color:var(--accent);font-style:italic">"ELBA is ABLE — 그리고 이제, 당신도."</span>
+    </p>
+  </div>`;
+  h+=`<div class="box box-accent" style="opacity:0;animation:fadeUp .8s ${delay+2}s forwards">
+    <div class="box-title t-accent">📜 모험의 기록</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <div>탐험가: <strong>${S.name}</strong></div>
+      <div>최종 레벨: <strong>Lv.${S.level}</strong></div>
+      <div>처치한 적: <strong>${S.defeated.length}명</strong></div>
+      <div>탐파한 층: <strong>${S.floor+1}층</strong></div>
+      <div>최종 HP: <strong>${S.hp}/${S.maxHp}</strong></div>
+      <div>최종 ATK: <strong>${S.atk+getAtkBonus()}</strong></div>
+    </div>
+  </div>`;
+  h+=`<div style="opacity:0;animation:fadeUp .6s ${delay+3.5}s forwards;text-align:center;margin-top:24px">
+    <p style="font-size:12px;color:var(--ink2);margin-bottom:16px;font-style:italic">환영합니다, ELBA의 새로운 동료님.</p>
+    <button class="btn btn-accent" style="max-width:300px;margin:0 auto;text-align:center" onclick="restart()">다시 탐험하기</button>
+  </div>`;
+  content.innerHTML=h;
+  showScreen('ending');
+  // Golden flash for ending
+  const flash=document.createElement('div');flash.id='screen-flash';document.body.appendChild(flash);
+  setTimeout(()=>flash.remove(),1000);
+}
+function restart(){localStorage.removeItem('elba-dungeon');location.reload()}
 
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded',()=>{
-  const saved=localStorage.getItem('elba-save');
-  if(saved){try{JSON.parse(saved);document.getElementById('continue-overlay').classList.add('show')}catch(e){anim('prologue')}}
-  else{anim('prologue')}
-  document.getElementById('player-name-input').addEventListener('keydown',e=>{if(e.key==='Enter')setPlayerName()});
-  upMet();
+  initTitle();
+  document.getElementById('name-inp').addEventListener('keydown',e=>{if(e.key==='Enter')startGame()});
 });
 </script>
 </body>
