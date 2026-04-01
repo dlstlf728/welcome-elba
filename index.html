@@ -83,7 +83,7 @@ h1{font-family:'Noto Serif KR',serif;color:var(--accent);font-size:30px;font-wei
 .b-announce{font-size:13px;color:#8a7a5a;letter-spacing:2px;text-align:center;margin-bottom:8px;opacity:0;animation:fadeUp .5s .2s forwards}
 .b-title{font-family:'Noto Serif KR',serif;font-size:20px;color:var(--parch);text-align:center;margin-bottom:24px;opacity:0;animation:fadeUp .6s .5s forwards}
 .b-title strong{color:var(--accent2)}
-.b-card{background:#1a1510;border:1px solid #5a4a30;padding:20px;margin-bottom:20px;opacity:0;animation:fadeUp .5s .8s forwards}
+.b-card{background:#1a1510;border:1px solid #5a4a30;padding:20px;margin-bottom:20px;opacity:0;animation:fadeUp .5s .8s forwards;position:relative}
 .b-name{font-family:'Noto Serif KR',serif;font-size:17px;color:var(--parch);font-weight:700}
 .b-sub{font-size:11px;color:#8a7a5a;letter-spacing:1px;margin-bottom:10px}
 .b-hp-row{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;color:#c4b898}
@@ -121,6 +121,8 @@ h1{font-family:'Noto Serif KR',serif;color:var(--accent);font-size:30px;font-wei
 @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .shake{animation:shake .3s}
+@keyframes dmgFlash{0%{opacity:.4;background:rgba(180,50,30,.5)}100%{opacity:1;background:transparent}}
+@keyframes healFlash{0%{opacity:.4;background:rgba(50,140,50,.5)}100%{opacity:1;background:transparent}}
 @keyframes throneReveal{0%{background:radial-gradient(circle 0px at 50% 50%,transparent,#1a1510)}30%{background:radial-gradient(circle 60px at 50% 50%,transparent 0%,rgba(26,21,16,.7) 80%,#1a1510 100%)}100%{background:none}}
 @keyframes screenFlash{0%{opacity:0}10%{opacity:.5}100%{opacity:0}}
 @keyframes bossShake{0%,100%{transform:translate(0)}10%{transform:translate(-3px,-2px)}20%{transform:translate(4px,1px)}30%{transform:translate(-2px,3px)}40%{transform:translate(3px,-1px)}50%{transform:translate(-1px,2px)}60%{transform:translate(2px,-3px)}70%{transform:translate(-4px,1px)}80%{transform:translate(1px,2px)}90%{transform:translate(-2px,-1px)}}
@@ -285,9 +287,22 @@ function renderStats(){
   // Update battle player HP if in combat
   const bphp=document.getElementById('b-php');
   if(bphp){
+    const prevHp=parseInt(bphp.textContent)||0;
     bphp.textContent=S.hp+'/'+S.maxHp;
     const bar=document.getElementById('b-php-bar');
     if(bar){bar.style.width=hpPct+'%';if(hpPct<30)bar.classList.add('low');else bar.classList.remove('low')}
+    // Flash effect on HP change — inline style to avoid overriding fadeUp opacity
+    const panel=document.getElementById('b-player');
+    if(panel&&S.hp<prevHp){
+      panel.style.animation='none';panel.offsetHeight;
+      panel.style.animation='dmgFlash .4s ease';
+      panel.addEventListener('animationend',()=>{panel.style.animation='none';},{once:true});
+    }
+    if(panel&&S.hp>prevHp){
+      panel.style.animation='none';panel.offsetHeight;
+      panel.style.animation='healFlash .4s ease';
+      panel.addEventListener('animationend',()=>{panel.style.animation='none';},{once:true});
+    }
   }
 }
 function floorEnemies(){return GAME.floors[S.floor]?GAME.floors[S.floor].enemies:[]}
@@ -572,6 +587,11 @@ function startBattle(eid){
   `;
   // Reset animations
   box.querySelectorAll('[class*="b-"]').forEach(el=>{el.style.animation='none';el.offsetHeight;el.style.animation=''});
+  // Lock opacity after fadeUp so shake/flash don't reset it
+  const bcard=document.getElementById('b-card');
+  bcard.addEventListener('animationend',()=>{bcard.style.opacity='1';bcard.style.animation='none';},{once:true});
+  const bplayer=document.getElementById('b-player');
+  bplayer.addEventListener('animationend',()=>{bplayer.style.opacity='1';bplayer.style.animation='none';},{once:true});
   document.getElementById('battle').classList.add('show');
   if(isBoss){document.getElementById('wrap').classList.add('boss-shake');const bf=document.createElement('div');bf.id='screen-flash';document.body.appendChild(bf);setTimeout(()=>bf.remove(),1000)}
 }
@@ -680,8 +700,11 @@ function updateEnemyHP(){
   const bar=document.getElementById('b-ehp-bar');
   bar.style.width=pct+'%';
   if(pct<30)bar.classList.add('low');
-  document.getElementById('b-card').classList.add('shake');
-  setTimeout(()=>document.getElementById('b-card').classList.remove('shake'),300);
+  const card=document.getElementById('b-card');
+  // Use inline style to combine both animations — avoids opacity conflict with CSS class animation
+  card.style.animation='none';card.offsetHeight;
+  card.style.animation='shake .3s ease, dmgFlash .4s ease';
+  card.addEventListener('animationend',()=>{card.style.animation='none';},{once:true});
 }
 function enemyDefeated(){
   const bs=battleState;const e=ENEMIES[bs.eid];
